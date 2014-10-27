@@ -19,6 +19,7 @@ Docker, vagrant, or make env
 pip install requirements.txt
 
 # Create the sqlite database
+# (Commands currently do not work)
 python scripts/db_create.py
 python scripts/db_migrate.py
 ```
