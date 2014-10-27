@@ -33,6 +33,6 @@ WORKDIR /grrmanager
 # Set the default command to execute    
 # when creating a new container
 # i.e. using CherryPy to serve the application
-CMD python runserver.py
+CMD python run.py
 
 
