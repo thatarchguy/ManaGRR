@@ -1,0 +1,29 @@
+
+wordlists/
+*.pyc
+app.db
+
+
+# Distribution / packaging
+db_repository/
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+__pycache__/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+

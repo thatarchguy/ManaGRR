@@ -1,0 +1,2 @@
+recursive-include grrmanager/templates *
+recursive-include grrmanager/static *
