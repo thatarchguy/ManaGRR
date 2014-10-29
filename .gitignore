@@ -22,6 +22,7 @@ var/
 .installed.cfg
 *.egg
 __pycache__/
+.vagrant/
 
 # Installer logs
 pip-log.txt
