@@ -14,22 +14,22 @@
     <link rel="shortcut icon" href="/static/favicon.ico">
 
     <!-- Bootstrap Core CSS -->
-    <link href="static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
 
     <!-- MetisMenu CSS -->
-    <link href="static/css/plugins/metisMenu/metisMenu.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/plugins/metisMenu/metisMenu.min.css') }}" rel="stylesheet">
 
     <!-- Timeline CSS -->
-    <link href="static/css/plugins/timeline.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/plugins/timeline.css') }}" rel="stylesheet">
 
     <!-- Custom CSS -->
-    <link href="static/css/sb-admin-2.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/sb-admin-2.css') }}" rel="stylesheet">
 
     <!-- Morris Charts CSS -->
-    <link href="static/css/plugins/morris.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/plugins/morris.css') }}" rel="stylesheet">
 
     <!-- Custom Fonts -->
-    <link href="static/font-awesome-4.1.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="{{ url_for('static', filename='font-awesome-4.1.0/css/font-awesome.min.css') }}" rel="stylesheet" type="text/css">
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -121,22 +121,22 @@
                             <!-- /input-group -->
                         </li>
                         <li>
-                            <a {% if active_page == "index" %}class="active" {% endif %}href="index.html"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
+                            <a {% if active_page == "index" %}class="active" {% endif %}href="/index"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
                         </li>
                         <li>
-                            <a {% if active_page == "clients" %}class="active" {% endif %} href="#"><i class="fa fa-bar-chart-o fa-fw"></i> Clients<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-bar-chart-o fa-fw"></i> Clients<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
                                 <li>
-                                    <a href="clients">View Clients</a>
+                                    <a {% if active_page == "view" %}class="active" {% endif %} href="/clients">View Clients</a>
                                 </li>
                                 <li>
-                                    <a href="clients/add">Add Client</a>
+                                    <a href="/clients/add">Add Client</a>
                                 </li>
                             </ul>
                             <!-- /.nav-second-level -->
                         </li>
                         <li>
-                            <a {% if active_page == "settings" %}class="active" {% endif %}href="settings"><i class="fa fa-wrench fa-fw"></i> Settings</a>
+                            <a {% if active_page == "settings" %}class="active" {% endif %}href="/settings"><i class="fa fa-wrench fa-fw"></i> Settings</a>
                         </li>
                     </ul>
                 </div>
@@ -164,21 +164,21 @@
     <!-- /#wrapper -->
 
     <!-- jQuery Version 1.11.0 -->
-    <script src="static/js/jquery-1.11.0.js"></script>
+    <script src="{{ url_for('static', filename='js/jquery-1.11.0.js') }}"></script>
 
     <!-- Bootstrap Core JavaScript -->
-    <script src="static/js/bootstrap.min.js"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 
     <!-- Metis Menu Plugin JavaScript -->
-    <script src="static/js/plugins/metisMenu/metisMenu.min.js"></script>
+    <script src="{{ url_for('static', filename='js/plugins/metisMenu/metisMenu.min.js') }}"></script>
 
     <!-- Morris Charts JavaScript -->
-    <script src="static/js/plugins/morris/raphael.min.js"></script>
-    <script src="static/js/plugins/morris/morris.min.js"></script>
-    <script src="static/js/plugins/morris/morris-data.js"></script>
+    <script src="{{ url_for('static', filename='js/plugins/morris/raphael.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/plugins/morris/morris.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/plugins/morris/morris-data.js') }}"></script>
 
     <!-- Custom Theme JavaScript -->
-    <script src="static/js/sb-admin-2.js"></script>
+    <script src="{{ url_for('static', filename='js/sb-admin-2.js') }}"></script>
 
 </body>
 

@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% set active_page = "clients" %}
+{% set active_page = "view" %}
 
 {% block head %}
 {{ super() }}
@@ -35,7 +35,7 @@
             <td>{{ entry.id }} </td>
             <td>{{ entry.name }} </td>
             <td>{{ entry.date_added }} </td>
-            <td>something something </td>
+            <td>{{ entry.nodes.count() }}</td>
             <td><a class="btn" href="client/{{ entry.id }}/admin">Admin</a>
         </tr>
      {% endfor %}

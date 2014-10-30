@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+{% set active_page = "clients" %}
+
+{% block head %}
+{{ super() }}
+{% endblock %}
+
+{% block dropdown_messages %}
+{{ super() }}
+{% endblock %}
+
+{% block dropdown_tasks %}
+{{ super() }}
+{% endblock %}
+
+{% block dropdown_alerts %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                {{ client.name }}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Type</th>
+            <th>Location</th>
+            <th>IP</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>    
+    {% for node in nodes %}
+        <tr>
+            <td>{{ node.id }} </td>
+            <td>{{ node.type }} </td>
+            <td>{{ node.location }} </td>
+            <td>{{ node.IP }}</td>
+            <td><a class="btn btn-danger" href="client/{{ node.id }}/admin">Delete</a>
+        </tr>
+     {% endfor %}
+        
+    </tbody>
+</table>
+
+
+{% endblock %}
+
+
