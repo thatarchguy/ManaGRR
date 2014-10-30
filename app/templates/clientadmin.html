@@ -23,7 +23,17 @@
     <div class="col-lg-6">
         <div class="panel panel-default">
             <div class="panel-heading">
-                {{ client.name }}
+                Details
+                <a href="edit"><i class="fa fa-edit fa-fw"></i></a>
+            </div>
+            <div class="panel-body">
+            <table width=50%>
+            
+              <tr><td><strong>Name: </strong></td><td>{{ client.name }}</td></tr>
+              <tr><td><strong>Date added: </strong></td><td>{{ client.date_added }}</td></tr>
+              <tr><td><strong>Contact Email: </strong></td><td>{{ client.email }}</td></tr>
+              <tr><td><strong>Contact Phone: </strong></td><td>{{client.phone }}</td></tr>
+            </table>
             </div>
         </div>
     </div>
