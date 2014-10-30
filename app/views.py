@@ -38,8 +38,14 @@ def clients_view():
     # SQLAlchemy functions here
     clients = models.Clients.query.all()
     
+     
     return render_template('clients.html', title="Clients", entries=clients)
 
+@app.route('/client/<int:client_id>/admin')
+def client_admin(client_id):
+    client = models.Clients.query.get(client_id)
+    nodes  = client.nodes.all()
+    return render_template('clientadmin.html', title=client.name, client=client, nodes=nodes)
 
 @app.route('/settings')
 def settings_view():
