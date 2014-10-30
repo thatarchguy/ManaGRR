@@ -1,5 +1,5 @@
 from flask import render_template
-from app import app
+from app import app,db,models
 import datetime
 
 @app.errorhandler(404)
@@ -16,9 +16,31 @@ def internal_error(error):
 @app.route('/index')
 @app.route('/index.html')
 def index_view():
-    return render_template('index.html')
+
+    # SQLAlchemy to get total clients
+    clientCount = models.Clients.query.count()
+    nodeCount   = models.Nodes.query.count()
+
+    return render_template('index.html',
+                            title="Dashboard", 
+                            clientCount=clientCount, 
+                            nodeCount=nodeCount)
 
 
 @app.route('/login')
 def login_view():
     return render_template('login.html')
+
+
+@app.route('/clients')
+def clients_view():
+
+    # SQLAlchemy functions here
+    clients = models.Clients.query.all()
+    
+    return render_template('clients.html', title="Clients", entries=clients)
+
+
+@app.route('/settings')
+def settings_view():
+    return render_template('settings.html', title="Settings")
