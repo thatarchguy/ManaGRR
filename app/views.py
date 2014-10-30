@@ -1,4 +1,4 @@
-from flask import render_template
+from flask import render_template, request
 from app import app,db,models
 import datetime
 
@@ -46,6 +46,38 @@ def client_admin(client_id):
     client = models.Clients.query.get(client_id)
     nodes  = client.nodes.all()
     return render_template('clientadmin.html', title=client.name, client=client, nodes=nodes)
+
+
+@app.route('/client/<int:client_id>/edit', methods=['POST'])
+def client_edit(client_id):
+    attribute = request.form['id']
+    value = request.form['value']
+
+    if attribute == "clientName":
+        client = models.Clients.query.get(client_id)
+        client.name = value
+        db.session.commit()
+
+    elif attribute == "clientDate":
+        client = models.Clients.query.get(client_id)
+        client.date = value
+        db.session.commit()
+
+    elif attribute == "clientEmail":
+        client = models.Clients.query.get(client_id)
+        client.email = value
+        db.session.commit()
+    
+    elif attribute == "clientPhone":
+        client = models.Clients.query.get(client_id)
+        client.phone = value
+        db.session.commit()
+
+    else:
+        value = "error"
+
+    return value
+
 
 @app.route('/settings')
 def settings_view():

@@ -26,3 +26,39 @@ $(function() {
         }
     })
 })
+
+
+
+ $(document).ready(function() {
+   
+    $('.jeditable-activate').click(function() {
+        var row = $(this).closest('td');
+        row = row.prev();
+        row.find('span:first').click();
+    });
+
+
+
+    $('.editable_name').editable('edit', {
+         indicator : 'Saving...',
+         tooltip   : 'Click to edit...'
+    });
+ 
+    $('.editable_date').editable('edit', { 
+         indicator : 'Saving...',
+         tooltip   : 'Click to edit...'
+    });
+    $('.editable_email').editable('edit', {
+         indicator : 'Saving...',
+         tooltip   : 'Click to edit...'
+    });
+    $('.editable_phone').editable('edit', {
+         indicator : 'Saving...',
+         tooltip   : 'Click to edit...'
+    });
+
+
+
+
+
+});
