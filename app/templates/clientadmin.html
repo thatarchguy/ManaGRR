@@ -33,6 +33,7 @@
               <tr><td><strong>Contact Phone: </strong></td><td><span id="clientPhone" class="editable_phone">{{client.phone }}</span></td><td>  <i class="fa fa-edit fa-fw jeditable-activate"></i></td></tr>
             </table>
             <a class="btn btn-default" href="grrconsole">Console</a>
+            <a class="btn btn-default" href="download">Download Executables</a>
             </div>
         </div>
     </div>
@@ -41,9 +42,16 @@
     <div class="col-lg-6">
         <div class="panel panel-default">
             <div class="panel-heading">
-                Add Server to Cluster
-            </div>
+                Add Worker to Cluster
+             </div>
             <div class="panel-body">
+            <form>
+            {{ CreateNodeForm.hidden_tag() }}
+            {{ CreateNodeForm.locations }}
+            {{ CreateNodeForm.digitalOcean(size=50) }}
+            {{ CreateNodeForm.aws(size=50) }}
+            <input type="submit" value="Create">
+            </form>
             </div>
         </div>
     </div>
@@ -78,7 +86,31 @@
 </table>
 
 
-
 {% endblock %}
 
+{% block scripts %}
 
+<script>
+$(document).ready(function() {
+    $('#digitalOcean').css('display','none');
+    $('#aws').css('display','none');
+    $('#locations').change(function(){
+        if(document.getElementById('locations').value == 'digiocean'){
+            $('#digitalOcean').css('display', 'inline');    
+             $('#aws').css('display','none');
+
+        }else 
+            if(document.getElementById('locations').value == 'aws'){
+
+             $('#aws').css('display','inline');
+             $('#digitalOcean').css('display', 'none'); 
+        }else {
+             $('#digitalOcean').css('display', 'none');
+             $('#aws').css('display','none');
+            }
+
+    });
+});
+</script>
+
+{% endblock %}

@@ -1,5 +1,6 @@
 from flask import render_template, request
 from app import app,db,models
+from .forms import CreateNode
 import datetime
 
 @app.errorhandler(404)
@@ -43,9 +44,19 @@ def clients_view():
 
 @app.route('/client/<int:client_id>/admin')
 def client_admin(client_id):
-    client = models.Clients.query.get(client_id)
-    nodes  = client.nodes.all()
-    return render_template('clientadmin.html', title=client.name, client=client, nodes=nodes)
+    client  = models.Clients.query.get(client_id)
+    nodes   = client.nodes.all()
+    digikey = models.Keys.query.get(client_id).digiocean
+    awskey  = models.Keys.query.get(client_id).aws
+ 
+    CreateNodeForm = CreateNode(digitalOcean=digikey,aws=awskey)
+
+
+    return render_template('clientadmin.html', 
+                            title=client.name, 
+                            client=client, 
+                            nodes=nodes,
+                            CreateNodeForm = CreateNodeForm)
 
 
 @app.route('/client/<int:client_id>/edit', methods=['POST'])
