@@ -10,4 +10,4 @@ script: make test
 branches:
   only:
     - master
-    - develop
+    - dev
