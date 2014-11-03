@@ -1,6 +1,6 @@
-from flask import render_template, request
+from flask import render_template, request, flash, redirect
 from app import app,db,models
-from .forms import CreateNode
+from .forms import CreateNode, AddClient
 import datetime
 
 @app.errorhandler(404)
@@ -88,6 +88,25 @@ def client_edit(client_id):
         value = "error"
 
     return value
+
+@app.route('/clients/add', methods=['POST','GET'])
+def client_add():
+    AddClientForm = AddClient()
+    if AddClientForm.validate_on_submit():
+        flash('Client Requested! Name: "%s", Email: "%s", Phone: "%s", DigiOcean: "%s", AWS: "%s", ssh: "%s"' % (AddClientForm.name.data, AddClientForm.email.data, AddClientForm.phone.data, AddClientForm.digitalOcean.data, AddClientForm.aws.data, AddClientForm.ssh.data)) 
+
+        newClient = models.Clients(name=AddClientForm.name.data, date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), phone=AddClientForm.phone.data, email=AddClientForm.email.data, size=AddClientForm.size.data)
+        
+        clientKeys = models.Keys(aws=AddClientForm.aws.data, digiocean=AddClientForm.digitalOcean.data, ssh=AddClientForm.ssh.data, client_id=newClient.id)
+        db.session.add(newClient)
+        db.session.add(clientKeys)
+        db.session.commit()
+        
+        return redirect('/client/' + str(newClient.id) + '/admin')
+
+
+    return render_template('addclient.html', title='Add Client', AddClientForm=AddClientForm)            
+
 
 
 @app.route('/settings')

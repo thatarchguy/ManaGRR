@@ -6,4 +6,13 @@ from app import models, db
 class CreateNode(Form):
     locations = SelectField(u'Location', choices=[('proxmox','Local (Proxmox)'), ('digiocean','DigitalOcean'), ('aws','AWS')], validators=[DataRequired()])
     digitalOcean = StringField(u'DOkey') 
-    aws = StringField(u'awskey') 
+    aws = StringField(u'awskey')
+
+class AddClient(Form):
+    name            = StringField(u'name', validators=[DataRequired()])
+    email           = StringField(u'email', validators=[DataRequired()])
+    phone           = StringField(u'phone', validators=[DataRequired()])
+    size            = SelectField(u'size', choices=[('small', 'Small < 100'), ('medium', 'Medium 100-500'), ('large', 'Large 500-100'), ('xl', 'XL 1000+')], validators=[DataRequired()])
+    digitalOcean    = StringField(u'DOkey')
+    aws             = StringField(u'awskey')
+    ssh             = StringField(u'sshkey')
