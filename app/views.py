@@ -1,4 +1,4 @@
-from flask import render_template, request, flash, redirect
+from flask import render_template, request, flash, redirect, url_for
 from app import app,db,models
 from .forms import CreateNode, AddClient
 import datetime
@@ -42,8 +42,9 @@ def clients_view():
      
     return render_template('clients.html', title="Clients", entries=clients)
 
-@app.route('/client/<int:client_id>/admin')
-def client_admin(client_id):
+@app.route('/client/<int:client_id>/admin/')
+def client_admin(client_id, new_client=False):
+    new_client = request.args.get('new_client')
     client  = models.Clients.query.get(client_id)
     nodes   = client.nodes.all()
     digikey = models.Keys.query.get(client_id).digiocean
@@ -51,12 +52,16 @@ def client_admin(client_id):
  
     CreateNodeForm = CreateNode(digitalOcean=digikey,aws=awskey)
 
+    if (new_client == None):
+        new_client = check_status(client.id)
+
 
     return render_template('clientadmin.html', 
                             title=client.name, 
                             client=client, 
                             nodes=nodes,
-                            CreateNodeForm = CreateNodeForm)
+                            CreateNodeForm = CreateNodeForm,
+                            new_client=new_client)
 
 
 @app.route('/client/<int:client_id>/edit', methods=['POST'])
@@ -93,7 +98,8 @@ def client_edit(client_id):
 def client_add():
     AddClientForm = AddClient()
     if AddClientForm.validate_on_submit():
-        flash('Client Requested! Name: "%s", Email: "%s", Phone: "%s", DigiOcean: "%s", AWS: "%s", ssh: "%s"' % (AddClientForm.name.data, AddClientForm.email.data, AddClientForm.phone.data, AddClientForm.digitalOcean.data, AddClientForm.aws.data, AddClientForm.ssh.data)) 
+
+        # Add duplicate checking
 
         newClient = models.Clients(name=AddClientForm.name.data, date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), phone=AddClientForm.phone.data, email=AddClientForm.email.data, size=AddClientForm.size.data)
         
@@ -102,13 +108,34 @@ def client_add():
         db.session.add(clientKeys)
         db.session.commit()
         
-        return redirect('/client/' + str(newClient.id) + '/admin')
+        
+        build_client(client, "all")
+
+
+        return redirect(url_for('client_admin', client_id=newClient.id, new_client=True))
 
 
     return render_template('addclient.html', title='Add Client', AddClientForm=AddClientForm)            
+
+@app.route('/client/<int:client_id>/status')
+def client_status(client_id):
+     return "99.9999" 
+
 
 
 
 @app.route('/settings')
 def settings_view():
     return render_template('settings.html', title="Settings")
+
+
+def check_status(client_id):
+    #check pidfile exists
+    return False
+
+
+def build_client(client, role):
+    # caller to the provisioner scripts
+
+
+    return True
