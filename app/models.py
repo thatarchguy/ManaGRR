@@ -7,8 +7,8 @@ class Nodes(db.Model):
     type        = db.Column(db.String(20))
     location    = db.Column(db.String(30))
     IP          = db.Column(db.String(20))   
-
-
+    net         = db.Column(db.String(10))
+    vid         = db.Column(db.String(8))
 
     def __repr__(self):
         return '<Type %r>' % (self.type)
