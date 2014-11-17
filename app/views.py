@@ -123,19 +123,18 @@ def client_add():
 
 @app.route('/client/<int:client_id>/status')
 def client_status(client_id):
-    if (os.path.isfile("provision/" + str(client_id) + ".lockfile")):
-        with open("provision/" + str(client_id) + ".lockfile", 'r') as f:
+    if (os.path.isfile("app/provision/" + str(client_id) + ".lockfile")):
+        with open("app/provision/" + str(client_id) + ".lockfile", 'r') as f:
             status = f.readline()
-    
-        if status == "sysprep":
+            f.close() 
+        if str(status.rstrip()) == "sysprep":
             percent = "30"
-        elif status == "proxmox":
+        elif str(status.rstrip()) == "proxmox":
             percent = "50"
-        elif status == "installing":
+        elif str(status.rstrip()) == "installing":
             percent = "80"
         else: 
-            percent = "10" 
-
+            percent = "10"
         return percent 
     return "0"
 
@@ -147,7 +146,7 @@ def settings_view():
 
 
 def check_status(client_id):
-    if (os.path.isfile("provision/" + str(client_id) + ".lockfile")):
+    if (os.path.isfile("app/provision/" + str(client_id) + ".lockfile")):
         return True 
 
 
@@ -157,16 +156,22 @@ def check_status(client_id):
 def build_client(client, role):
     vids = models.Nodes.query.order_by(models.Nodes.vid.desc())
     vid = vids[0].vid + 1
-
-    interfaces = models.Nodes.query.order_by(models.Nodes.net.desc())
-    inter = str(interfaces[0].net)
-    interid = re.split('(\d+)',inter)
-    inter = "vmbr" + str(int(interid[1]) + 1)
-
-    if (os.path.isfile("provision/" + str(client.id) + ".lockfile")):
+    if (role == "all"):
+        interfaces = models.Nodes.query.order_by(models.Nodes.net.desc())
+        inter = str(interfaces[0].net)
+        interid = re.split('(\d+)',inter)
+        inter = "vmbr" + str(int(interid[1]) + 1)
+    else: 
+        interfaces = models.Nodes.query.order_by(models.Nodes.net.desc()).filter(models.Nodes.id=='1')
+        inter = str(interfaces[0].net)
+        interid = re.split('(\d+)',inter)
+        inter = "vmbr" + str(int(interid[1]))
+        
+    if (os.path.isfile("app/provision/" + str(client.id) + ".lockfile")):
         return False
     arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n seanconnery" + " -i " + inter  
-    subprocess.Popen(["app/provision/wrapper.sh " + arguments], shell=True, executable="/bin/bash")
+    subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash",cwd=os.getcwd()+"/app/provision/")
+    
 
 
     return True

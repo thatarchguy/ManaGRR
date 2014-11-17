@@ -73,30 +73,30 @@ fi
 
 if [[ $ROLE =~ "worker" ]]; then
      echo "sysprep" > $CID.lockfile
-     ./app/provision/sysprep.sh -c $CLIENT -r worker
+     ./sysprep.sh -c $CLIENT -r worker
      echo "proxmox" > $CID.lockfile
-     ./app/provision/proxmox.sh -c $CLIENT -v $VID -r worker -n $NODE -i $INTERFACE
+     ./proxmox.sh -c $CLIENT -v $VID -r worker -n $NODE -i $INTERFACE
      echo "installing" > $CID.lockfile
      rm -f $CID.lockfile
 elif [[ $ROLE =~ "DB" ]]; then
      echo "sysprep" > $CID.lockfile
-     ./app/provision/sysprep.sh -c $CLIENT -r DB
+     ./sysprep.sh -c $CLIENT -r DB
      echo "proxmox" > $CID.lockfile
-     ./app/provision/proxmox.sh -c $CLIENT -v $VID -r DB -n $NODE -i $INTERFACE
+     ./proxmox.sh -c $CLIENT -v $VID -r DB -n $NODE -i $INTERFACE
      echo "installing" > $CID.lockfile
      rm -f $CID.lockfile
 elif [[ $ROLE =~ "control" ]]; then
      echo "sysprep" > $CID.lockfile
-     ./app/provision/sysprep.sh -c $CLIENT -r control
+     ./sysprep.sh -c $CLIENT -r control
      echo "proxmox" > $CID.lockfile
-     ./app/provision/proxmox.sh -c $CLIENT -v $VID -r control -n $NODE -i $INTERFACE
+     ./proxmox.sh -c $CLIENT -v $VID -r control -n $NODE -i $INTERFACE
      echo "installing" > $CID.lockfile
      rm -f $CID.lockfile
 elif [[ $ROLE =~ "all" ]]; then
      echo "sysprep" > $CID.lockfile
-     ./app/provision/sysprep.sh -c $CLIENT -r all
+     ./sysprep.sh -c $CLIENT -r all
      echo "proxmox" > $CID.lockfile
-     ./app/provision/proxmox.sh -c $CLIENT -v $VID -r all -n $NODE -i $INTERFACE
+     ./proxmox.sh -c $CLIENT -v $VID -r all -n $NODE -i $INTERFACE
      echo "installing" > $CID.lockfile
      rm -f $CID.lockfile
 else

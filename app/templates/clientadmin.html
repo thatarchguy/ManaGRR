@@ -88,7 +88,11 @@
             <td>{{ node.type }} </td>
             <td>{{ node.location }} </td>
             <td>{{ node.IP }}</td>
-            <td><a class="btn btn-danger" href="client/{{ node.id }}/admin">Delete</a>
+            {% if node.type == "worker" %}
+            <td><a class="btn btn-danger" href="node/{{ node.id }}/delete">Delete</a></td>
+            {% else %}
+            <td></td>
+            {% endif %}
         </tr>
      {% endfor %}
         

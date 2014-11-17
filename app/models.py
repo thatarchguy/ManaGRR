@@ -8,11 +8,11 @@ class Nodes(db.Model):
     location    = db.Column(db.String(30))
     IP          = db.Column(db.String(20))   
     net         = db.Column(db.String(10))
-    vid         = db.Column(db.String(8))
+    vid         = db.Column(db.Integer)
 
     def __repr__(self):
         return '<Type %r>' % (self.type)
-#models.Nodes(client_id=1, type="worker", location="proxmox", IP="10.5.0.103")
+#models.Nodes(client_id=1, type="worker", location="proxmox", IP="10.5.0.103", net="vmbr20", vid="200")
 #models.Nodes(client_id=models.Client.get(1)
 
 class Keys(db.Model):
