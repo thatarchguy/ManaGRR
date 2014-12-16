@@ -121,6 +121,24 @@ def client_add():
 
     return render_template('addclient.html', title='Add Client', AddClientForm=AddClientForm)            
 
+@app.route('/clients/checkin/', methods=['GET'])
+def node_checkin():
+    clientName  = request.args.get('client')
+    role        = request.args.get('role')
+    ip          = request.args.get('ip')
+
+    # This function was tested in python CLI. Seems to work.
+    clientID = models.Clients.query.filter_by(name=client).one().id
+
+    # We only want the first one, right? Yeah? Ideally hm... This could mess up if cloud workers provision faster than proxmox workers.
+    node = models.Nodes.query.filter_by(client_id=clientID, type=role, IP='0.0.0.0').one()
+    node.IP = ip
+    db.session.commit()
+
+
+
+    return status
+
 @app.route('/client/<int:client_id>/status')
 def client_status(client_id):
     if (os.path.isfile("app/provision/" + str(client_id) + ".lockfile")):
@@ -172,6 +190,18 @@ def build_client(client, role):
     arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n seanconnery" + " -i " + inter  
     subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash",cwd=os.getcwd()+"/app/provision/")
     
-
-
+    # Due to the nature of the database model, we need to insert basic information about nodes here.
+    # They will be updated with ip address upon creation
+    if (role == "all"):
+        addWorker   = models.Nodes(client_id=client.id, type="worker", location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
+        addDatabase = models.Nodes(client_id=client.id, type="database", location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
+        addControl  = models.Nodes(client_id=client.id, type="control", location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
+        db.session.add(addWorker)
+        db.session.add(addDatabase)
+        db.session.add(addControl)
+        db.session.commit()
+    elif (role == "worker"):
+        models.Nodes(client_id=client.id, type="worker", location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
+        db.session.add(addWorker)
+        db.session.commit()
     return True
