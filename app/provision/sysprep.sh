@@ -1,7 +1,6 @@
 #!/bin/bash
 # Sysprep images to prepare for upload to virt server
 
-
 function worker {
 echo "[+] Creating Worker"
 cp ubuntu_qemu/qemu-ubuntu14-base.qcow2 ubuntu_qemu/ubuntu14-worker.qcow2
@@ -16,7 +15,6 @@ virt-sysprep --enable customize \
     --hostname $HOST-worker \
     -a ubuntu_qemu/ubuntu14-worker.qcow2
 }
-
 
 function DB {
 echo "[+] Creating DB"
@@ -51,7 +49,6 @@ virt-sysprep --enable customize \
     --hostname $HOST-control \
     -a ubuntu_qemu/ubuntu14-control.qcow2
 }
-
 
 usage()
 {

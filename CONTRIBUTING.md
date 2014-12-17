@@ -6,7 +6,7 @@ get things working in your environment. There are a few guidelines that I
 need contributors to follow so that I can have a chance of keeping on
 top of things.
 
-I use [Waffle.io](https://waffle.io/thatarchguy/grr-scripts) to better manage issues:
+I use [Waffle.io](https://waffle.io/thatarchguy/GRR-Manager) to better manage issues:
 
 ## Getting Started
 
@@ -20,7 +20,7 @@ I use [Waffle.io](https://waffle.io/thatarchguy/grr-scripts) to better manage is
 
 ###Report Bugs
 
-Report bugs at https://github.com/thatarchguy/grr-scripts/issues.
+Report bugs at https://github.com/thatarchguy/GRR-Manager/issues.
 
 If you are reporting a bug, please include:
 
@@ -40,11 +40,11 @@ is open to whoever wants to implement it.
 
 ###Write Documentation
 
-grr-scripts could always use more documentation.
+GRR-Manager could always use more documentation.
 
 ###Submit Feedback
 
-The best way to send feedback is to file an issue at https://github.com/thatarchguy/grr-scripts/issues.
+The best way to send feedback is to file an issue at https://github.com/thatarchguy/GRR-Manager/issues.
 
 If you are proposing a feature:
 
@@ -56,15 +56,15 @@ If you are proposing a feature:
 
 Setup for Local Development
 
-1. Fork the `grr-scripts` repo on GitHub.
+1. Fork the `GRR-Manager` repo on GitHub.
 2. Clone your fork locally::
 
-    $ git clone git@github.com:your_name_here/grr-scripts.git
+    $ git clone git@github.com:your_name_here/GRR-Manager.git
 
 3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
 
-    $ mkvirtualenv grr-scripts
-    $ cd grr-scripts/
+    $ mkvirtualenv GRR-Manager
+    $ cd GRR-Manager/
     $ python setup.py develop
 or
     $ make env
@@ -77,7 +77,7 @@ or
 
 5. When you're done making changes, check that your changes pass flake8 and the tests:
 
-    $ flake8 grr-scripts tests
+    $ flake8 GRR-Manager tests
     $ python setup.py test
 
    To get flake8, just pip install them into your virtualenv. 

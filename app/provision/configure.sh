@@ -1,5 +1,6 @@
 #!/bin/bash
-# Configure
+# Configure the machine on firstboot according to its role.
+# This should be installed on the machine during sysprep.sh
 
 HOSTNAME=$HOSTNAME
 
@@ -24,8 +25,6 @@ stdpkg
 
 }
 
-
-
 function DB {
 
 # Initalize network
@@ -42,7 +41,6 @@ iface eth1 inet dhcp
 
 EOF
 
-
 ifdown eth0 && ifup eth0
 ifdown eth1 && ifup eth1
 
@@ -53,13 +51,9 @@ sed -i 's/#authoritative/authoritative/' /etc/dhcp/dhcpd.conf
 echo "subnet 10.0.5.0 netmask 255.255.255.0 { range 10.0.5.3 10.0.5.254; }" >> /etc/dhcp/dhcpd.conf
 service isc-dhcp-server restart
 
-
-
 stdpkg
 
 }
-
-
 
 function control {
 
@@ -81,14 +75,11 @@ ifdown eth1 && ifup eth1
 stdpkg
 }
 
-
-
 function stdpkg {
+
+# install standard packages
 /usr/sbin/dpkg-reconfigure openssh-server
 }
-
-
-
 
 
 if [[ $HOSTNAME =~ [/DB/] ]]; then
