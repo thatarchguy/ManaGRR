@@ -6,6 +6,9 @@ app.db
 
 # Distribution / packaging
 db_repository/
+ubuntu14.iso
+*.qcow2
+
 .Python
 env/
 build/

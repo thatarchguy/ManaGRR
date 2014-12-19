@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import imp
 from migrate.versioning import api
-from app import app,db
+from app import app, db
 import config
 
 app.config.from_object('config.BaseConfiguration')
@@ -9,9 +9,8 @@ app.config.from_object('config.BaseConfiguration')
 SQLALCHEMY_MIGRATE_REPO = app.config['SQLALCHEMY_MIGRATE_REPO']
 SQLALCHEMY_DATABASE_URI = app.config['SQLALCHEMY_DATABASE_URI']
 
-
 v = api.db_version(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
-migration = SQLALCHEMY_MIGRATE_REPO + ('/versions/%03d_migration.py' % (v+1))
+migration = SQLALCHEMY_MIGRATE_REPO + ('/versions/%03d_migration.py' % (v + 1))
 tmp_module = imp.new_module('old_model')
 old_model = api.create_model(SQLALCHEMY_DATABASE_URI, SQLALCHEMY_MIGRATE_REPO)
 exec(old_model, tmp_module.__dict__)

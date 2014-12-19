@@ -22,7 +22,7 @@ clean:
 	find . -name '__pycache__' -exec rmdir {} \;
 
 lint:
-	flake8 --exclude=env .
+	flake8 --ignore E127,E221,F401 --max-line-length=220 --exclude=db_repository,tests,env .
 
 test:
 	python setup.py test
