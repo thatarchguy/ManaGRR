@@ -1,2 +1,2 @@
-recursive-include grrmanager/templates *
-recursive-include grrmanager/static *
+recursive-include app/templates *
+recursive-include app/static *
