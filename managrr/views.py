@@ -1,5 +1,5 @@
 from flask import render_template, request, flash, redirect, url_for
-from app import app, db, models
+from managrr import app, db, models
 from .forms import CreateNode, AddClient
 import os
 import datetime
@@ -144,8 +144,8 @@ def node_checkin():
 
 @app.route('/client/<int:client_id>/status')
 def client_status(client_id):
-    if (os.path.isfile("app/provision/" + str(client_id) + ".lockfile")):
-        with open("app/provision/" + str(client_id) + ".lockfile", 'r') as f:
+    if (os.path.isfile("managrr/provision/" + str(client_id) + ".lockfile")):
+        with open("managrr/provision/" + str(client_id) + ".lockfile", 'r') as f:
             status = f.readline()
             f.close()
         if str(status.rstrip()) == "sysprep":
@@ -166,7 +166,7 @@ def settings_view():
 
 
 def check_status(client_id):
-    if (os.path.isfile("app/provision/" + str(client_id) + ".lockfile")):
+    if (os.path.isfile("managrr/provision/" + str(client_id) + ".lockfile")):
         return True
 
     return False
@@ -193,7 +193,7 @@ def build_client(client, role):
     if check_status(client.id) is True:
         return False
     arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n seanconnery" + " -i " + inter
-    subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/app/provision/")
+    subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
     # Due to the nature of the database model, we need to insert basic information about nodes here.
     # They will be updated with ip address upon creation
     if (role == "all"):

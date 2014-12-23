@@ -12,7 +12,7 @@ import urllib2
 import datetime
 from flask import Flask
 from flask.ext.testing import LiveServerTestCase
-from app import app, db, models
+from managrr import app, db, models
 import config
 
 
