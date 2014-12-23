@@ -1,5 +1,5 @@
 from flask import render_template, request, flash, redirect, url_for
-from app import app, db, models
+from managrr import app, db, models
 from .forms import CreateNode, AddClient
 import os
 import datetime
@@ -68,7 +68,7 @@ def client_admin(client_id, new_client=False):
                             new_client=new_client)
 
 
-@app.route('/client/<int:client_id>/edit', methods=['POST'])
+@app.route('/client/<int:client_id>/admin/edit', methods=['POST'])
 def client_edit(client_id):
     attribute = request.form['id']
     value = request.form['value']
@@ -144,8 +144,8 @@ def node_checkin():
 
 @app.route('/client/<int:client_id>/status')
 def client_status(client_id):
-    if (os.path.isfile("app/provision/" + str(client_id) + ".lockfile")):
-        with open("app/provision/" + str(client_id) + ".lockfile", 'r') as f:
+    if (os.path.isfile("managrr/provision/" + str(client_id) + ".lockfile")):
+        with open("managrr/provision/" + str(client_id) + ".lockfile", 'r') as f:
             status = f.readline()
             f.close()
         if str(status.rstrip()) == "sysprep":
@@ -166,31 +166,34 @@ def settings_view():
 
 
 def check_status(client_id):
-    if (os.path.isfile("app/provision/" + str(client_id) + ".lockfile")):
+    if (os.path.isfile("managrr/provision/" + str(client_id) + ".lockfile")):
         return True
 
     return False
 
 
 def build_client(client, role):
-    vids = models.Nodes.query.order_by(models.Nodes.vid.desc())
-    vid = vids[0].vid + 1
-    if (role == "all"):
-        interfaces = models.Nodes.query.order_by(models.Nodes.net.desc())
-        inter = str(interfaces[0].net)
-        interid = re.split('(\d+)', inter)
-        inter = "vmbr" + str(int(interid[1]) + 1)
+    lastVid = models.Nodes.query.order_by(models.Nodes.vid.desc()).first()
+    if lastVid is None:
+        vid = 200
     else:
-        interfaces = models.Nodes.query.order_by(models.Nodes.net.desc()).filter(models.Nodes.id == '1')
-        inter = str(interfaces[0].net)
-        interid = re.split('(\d+)', inter)
-        inter = "vmbr" + str(int(interid[1]))
-
-    if (os.path.isfile("app/provision/" + str(client.id) + ".lockfile")):
+        vid = lastVid.vid + 1
+    if (role == "all"):
+        lastInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).first()
+        if lastInterface is None:
+            inter = "vmbr10"
+        else:
+            inter = str(lastInterface.net)
+            interid = re.split('(\d+)', inter)
+            inter = "vmbr" + str(int(interid[1]) + 1)
+    elif (role == "worker"):
+        # Probably going to need to expand more here when EC2 and DigiOcean come into play
+        clientInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).filter(models.Nodes.client_id == client.id).first()
+        inter = str(clientInterface.net)
+    if check_status(client.id) is True:
         return False
     arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n seanconnery" + " -i " + inter
-    subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/app/provision/")
-
+    subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
     # Due to the nature of the database model, we need to insert basic information about nodes here.
     # They will be updated with ip address upon creation
     if (role == "all"):

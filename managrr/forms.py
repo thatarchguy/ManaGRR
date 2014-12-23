@@ -1,7 +1,7 @@
 from flask.ext.wtf import Form
 from wtforms import StringField, BooleanField, SelectField
 from wtforms.validators import DataRequired
-from app import models, db
+from managrr import models, db
 
 
 class CreateNode(Form):

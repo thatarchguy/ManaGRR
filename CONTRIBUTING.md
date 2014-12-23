@@ -66,10 +66,13 @@ Setup for Local Development
     $ mkvirtualenv GRR-Manager
     $ cd GRR-Manager/
     $ python setup.py develop
-or
-    $ make env
 
-4. Create a branch for local development::
+    or
+    
+    $ make env (This is how I do it)
+    $ python setup.py test
+
+4. Create a branch off of dev for local development::
 
     $ git checkout -b name-of-your-bugfix-or-feature
    
@@ -77,7 +80,7 @@ or
 
 5. When you're done making changes, check that your changes pass flake8 and the tests:
 
-    $ flake8 GRR-Manager tests
+    $ make lint
     $ python setup.py test
 
    To get flake8, just pip install them into your virtualenv. 
@@ -90,6 +93,10 @@ or
 
 7. Submit a pull request through the GitHub website.
 
+8. 99 times out of 100...do not commit to Master.
+    All merges/commits to Master must be GPG signed and signed off by an admin
+    $ git merge -S --no-ff dev
 
-
-
+    or for a quick commit
+    
+    $ git commit -s -S -m "edited Makefile"

@@ -4,7 +4,7 @@ setup(
     name='grrmanager',
     version='0.0.0a',
     long_description=__doc__,
-    packages=['app'],
+    packages=['managrr'],
     include_package_data=True,
     zip_safe=False,
     install_requires=[

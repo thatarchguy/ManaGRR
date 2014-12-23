@@ -7,4 +7,4 @@ app.config.from_object('config.BaseConfiguration')
 db = SQLAlchemy(app)
 toolbar = DebugToolbarExtension(app)
 
-from app import views, models
+from managrr import views, models

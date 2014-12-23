@@ -2,7 +2,7 @@
 wordlists/
 *.pyc
 app.db
-
+todo
 
 # Distribution / packaging
 db_repository/
