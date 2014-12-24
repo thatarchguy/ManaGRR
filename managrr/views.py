@@ -52,11 +52,11 @@ def client_admin(client_id, new_client=False):
     new_client = request.args.get('new_client')
     client  = models.Clients.query.get(client_id)
     nodes   = client.nodes.all()
-    digikey = models.Keys.query.get(client_id).digiocean
-    awskey  = models.Keys.query.get(client_id).aws
+    digikey = models.Keys.query.filter_by(client_id=client_id).one().digiocean
+    awskey  = models.Keys.query.filter_by(client_id=client_id).one().aws
 
-    CreateNodeForm = CreateNode(digitalOcean=digikey, aws=awskey)
-
+    CreateNodeForm = CreateNode(digiocean=digikey, aws=awskey)
+    app.logger.info(digikey)
     if (new_client == None):  # noqa
         new_client = check_status(client.id)
 
@@ -101,6 +101,7 @@ def client_edit(client_id):
 
 @app.route('/clients/add', methods=['POST', 'GET'])
 def client_add():
+
     AddClientForm = AddClient()
     if AddClientForm.validate_on_submit():
 
@@ -115,14 +116,48 @@ def client_add():
 
         client = models.Clients.query.get(newClient.id)
 
-        build_client(client, "all")
+        build_client_local(client, "all")
 
         return redirect(url_for('client_admin', client_id=newClient.id, new_client=True))
 
     return render_template('addclient.html', title='Add Client', AddClientForm=AddClientForm)
 
 
-@app.route('/nodes/api/checkin/', methods=['GET'])
+@app.route('/api/nodes/create/', methods=['POST', 'GET'])
+def node_create(client=None, role=None, location=None):
+    if request.method == 'POST':
+        clientName  = request.form('client')
+        role        = request.form('roles')
+        location    = request.form('location')
+        key         = request.form('key')
+    # This function was tested in python CLI. Seems to work.
+        clientID = models.Clients.query.filter_by(name=clientName).one().id
+    elif client is not None:
+        clientID  = client.id
+        role        = role
+        location    = location
+        if location == "aws":
+            key  = models.Keys.query.get(client_id).aws
+        elif location == "digiocean":
+            key = models.Keys.query.get(client_id).digiocean
+ 
+        
+    else:
+        return "0"
+   
+
+    print("RAWR")
+    """
+    clientKey = models.Keys(aws=AddClientForm.aws.data, digiocean=AddClientForm.digitalOcean.data, ssh=AddClientForm.ssh.data, client_id=clientID)
+    db.session.add(clientKey)
+    db.session.add(clientKey)
+    db.session.commit()
+    """
+
+    return "1"
+
+
+@app.route('/api/nodes/checkin/', methods=['GET'])
 def node_checkin():
     clientName  = request.args.get('client')
     role        = request.args.get('role')
@@ -161,7 +196,7 @@ def client_status(client_id):
     return "0"
 
 
-@app.route('/nodes/api/history')
+@app.route('/api/nodes/history')
 def node_history():
     # I need to finish the 'add worker' problem before I work on this
     # Query database count all for latest
@@ -182,7 +217,7 @@ def check_status(client_id):
     return False
 
 
-def build_client(client, role):
+def build_client_local(client, role):
     lastVid = models.Nodes.query.order_by(models.Nodes.vid.desc()).first()
     if lastVid is None:
         vid = 200

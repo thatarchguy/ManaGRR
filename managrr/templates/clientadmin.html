@@ -55,11 +55,13 @@
                 Add Worker to Cluster
              </div>
             <div class="panel-body">
-            <form>
+            <form method="POST">
             {{ CreateNodeForm.hidden_tag() }}
-            {{ CreateNodeForm.locations }}
-            {{ CreateNodeForm.digitalOcean(size=50) }}
+            {{ CreateNodeForm.location }}
+            {{ CreateNodeForm.digiocean(size=50) }}
             {{ CreateNodeForm.aws(size=50) }}
+            <input type="hidden" name="client" value="{{ client.name }}">
+            
             <input type="submit" value="Create">
             </form>
             </div>
@@ -129,20 +131,18 @@ $(document).ready(function(){
 
 {% else %}
 $(document).ready(function() {
-    $('#digitalOcean').css('display','none');
+    $('#digiocean').css('display','none');
     $('#aws').css('display','none');
-    $('#locations').change(function(){
-        if(document.getElementById('locations').value == 'digiocean'){
-            $('#digitalOcean').css('display', 'inline');    
+    $('#location').change(function(){
+        if(document.getElementById('location').value == 'digiocean'){
+            $('#digiocean').css('display', 'inline');    
              $('#aws').css('display','none');
-
         }else 
             if(document.getElementById('locations').value == 'aws'){
-
              $('#aws').css('display','inline');
-             $('#digitalOcean').css('display', 'none'); 
+             $('#digiocean').css('display', 'none'); 
         }else {
-             $('#digitalOcean').css('display', 'none');
+             $('#digiocean').css('display', 'none');
              $('#aws').css('display','none');
             }
 

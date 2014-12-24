@@ -5,8 +5,8 @@ from managrr import models, db
 
 
 class CreateNode(Form):
-    locations       = SelectField(u'Location', choices=[('proxmox', 'Local (Proxmox)'), ('digiocean', 'DigitalOcean'), ('aws', 'AWS')], validators=[DataRequired()])
-    digitalOcean    = StringField(u'DOkey')
+    location        = SelectField(u'Location', choices=[('proxmox', 'Local (Proxmox)'), ('digiocean', 'DigitalOcean'), ('aws', 'AWS')], validators=[DataRequired()])
+    digiocean       = StringField(u'DOkey')
     aws             = StringField(u'awskey')
 
 
