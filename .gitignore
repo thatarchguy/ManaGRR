@@ -3,6 +3,7 @@ wordlists/
 *.pyc
 app.db
 todo
+managrr.log
 
 # Distribution / packaging
 db_repository/
