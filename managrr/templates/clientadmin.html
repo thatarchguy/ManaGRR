@@ -55,7 +55,7 @@
                 Add Worker to Cluster
              </div>
             <div class="panel-body">
-            <form method="POST">
+            <form id="worker" method="POST" action="" onsubmit="postForm(); return false;">
             {{ CreateNodeForm.hidden_tag() }}
             {{ CreateNodeForm.location }}
             {{ CreateNodeForm.digiocean(size=50) }}
@@ -146,6 +146,28 @@ $(document).ready(function() {
             }
 
     });
+});
+
+$("#worker").submit(function(e)
+{
+    var postData = $(this).serializeArray();
+    var formURL = "/api/nodes/create/"
+    $.ajax(
+    {
+        url : formURL,
+        type: "POST",
+        data : postData,
+        success:function(data, textStatus, jqXHR)
+        {
+            //data: return data from server
+        },
+        error: function(jqXHR, textStatus, errorThrown)
+        {
+            //if fails     
+        }
+    });
+    e.preventDefault(); //STOP default action
+    e.unbind(); //unbind. to stop multiple form submit.
 });
 
 {% endif %}

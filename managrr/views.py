@@ -126,10 +126,10 @@ def client_add():
 @app.route('/api/nodes/create/', methods=['POST', 'GET'])
 def node_create(client=None, role=None, location=None):
     if request.method == 'POST':
-        clientName  = request.form('client')
-        role        = request.form('roles')
-        location    = request.form('location')
-        key         = request.form('key')
+        clientName  = request.form['client']
+        role        = request.form['roles']
+        location    = request.form['location']
+        key         = request.form['key']
     # This function was tested in python CLI. Seems to work.
         clientID = models.Clients.query.filter_by(name=clientName).one().id
     elif client is not None:
@@ -145,8 +145,6 @@ def node_create(client=None, role=None, location=None):
     else:
         return "0"
    
-
-    print("RAWR")
     """
     clientKey = models.Keys(aws=AddClientForm.aws.data, digiocean=AddClientForm.digitalOcean.data, ssh=AddClientForm.ssh.data, client_id=clientID)
     db.session.add(clientKey)
