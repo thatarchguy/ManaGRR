@@ -135,9 +135,10 @@ def node_checkin():
     node = models.Nodes.query.filter_by(client_id=clientID, type=role, IP='0.0.0.0').one()
     node.IP = ip
     db.session.commit()
+    app.logger.info(clientName + " " + role + " " + ip + " Checked in")
 
     # Some nonexistent error checking straight to ok
-    status = 1
+    status = "1"
 
     return status
 
@@ -159,25 +160,14 @@ def client_status(client_id):
         return percent
     return "0"
 
+
 @app.route('/nodes/api/history')
 def node_history():
-    # I need to finish the 'add worker' problem before I work on this   
+    # I need to finish the 'add worker' problem before I work on this
     # Query database count all for latest
-    # query database count for each day previous to current
-    # add them up per day
-    #
-    #  latest   yesterday  ...     ...
-    #   15          9      5       3
-    #              
-    # I dont know how to do this off the top of my head.
-    # 
-    
-
+    jsondumps = "boilerplate"
 
     return jsondumps
-
-
-
 
 
 @app.route('/settings')
@@ -212,8 +202,9 @@ def build_client(client, role):
         inter = str(clientInterface.net)
     if check_status(client.id) is True:
         return False
+    app.logger.info("Building: " + role + " for newclient " + client.name)
     arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n seanconnery" + " -i " + inter
-    #subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
+    subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
     # Due to the nature of the database model, we need to insert basic information about nodes here.
     # They will be updated with ip address upon creation
     if (role == "all"):
