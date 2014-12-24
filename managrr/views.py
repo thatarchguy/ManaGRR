@@ -122,7 +122,7 @@ def client_add():
     return render_template('addclient.html', title='Add Client', AddClientForm=AddClientForm)
 
 
-@app.route('/clients/checkin/', methods=['GET'])
+@app.route('/nodes/api/checkin/', methods=['GET'])
 def node_checkin():
     clientName  = request.args.get('client')
     role        = request.args.get('role')
@@ -159,6 +159,26 @@ def client_status(client_id):
         return percent
     return "0"
 
+@app.route('/nodes/api/history')
+def node_history():
+    # I need to finish the 'add worker' problem before I work on this   
+    # Query database count all for latest
+    # query database count for each day previous to current
+    # add them up per day
+    #
+    #  latest   yesterday  ...     ...
+    #   15          9      5       3
+    #              
+    # I dont know how to do this off the top of my head.
+    # 
+    
+
+
+    return jsondumps
+
+
+
+
 
 @app.route('/settings')
 def settings_view():
@@ -193,19 +213,19 @@ def build_client(client, role):
     if check_status(client.id) is True:
         return False
     arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n seanconnery" + " -i " + inter
-    subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
+    #subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
     # Due to the nature of the database model, we need to insert basic information about nodes here.
     # They will be updated with ip address upon creation
     if (role == "all"):
-        addWorker   = models.Nodes(client_id=client.id, type="worker", location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
-        addDatabase = models.Nodes(client_id=client.id, type="database", location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
-        addControl  = models.Nodes(client_id=client.id, type="control", location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
+        addWorker   = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
+        addDatabase = models.Nodes(client_id=client.id, type="database", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
+        addControl  = models.Nodes(client_id=client.id, type="control", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
         db.session.add(addWorker)
         db.session.add(addDatabase)
         db.session.add(addControl)
         db.session.commit()
     elif (role == "worker"):
-        models.Nodes(client_id=client.id, type="worker", location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
+        addWorker = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
         db.session.add(addWorker)
         db.session.commit()
     return True

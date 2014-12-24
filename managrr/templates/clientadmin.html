@@ -78,6 +78,7 @@
             <th>Type</th>
             <th>Location</th>
             <th>IP</th>
+            <th>Date</th>
             <th></th>
         </tr>
     </thead>
@@ -88,6 +89,7 @@
             <td>{{ node.type }} </td>
             <td>{{ node.location }} </td>
             <td>{{ node.IP }}</td>
+            <td>{{ node.date_added }} </td>
             {% if node.type == "worker" %}
             <td><a class="btn btn-danger" href="node/{{ node.id }}/delete">Delete</a></td>
             {% else %}

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import imp
 from migrate.versioning import api
-from app import app, db
+from managrr import app, db
 import config
 
 app.config.from_object('config.BaseConfiguration')

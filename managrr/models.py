@@ -6,12 +6,13 @@ class Nodes(db.Model):
     """
     Database Model for Nodes
 
-    models.Nodes(client_id=1, type="worker", location="proxmox", IP="10.5.0.103", net="vmbr20", vid="200")
+    models.Nodes(client_id=1, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="10.5.0.103", net="vmbr20", vid="200")
     models.Nodes(client_id=models.Client.get(1)
     """
     id          = db.Column(db.Integer, primary_key=True)
     client_id   = db.Column(db.Integer, db.ForeignKey('clients.id'))
     type        = db.Column(db.String(20))
+    date_added  = db.Column(db.String(20))
     location    = db.Column(db.String(30))
     IP          = db.Column(db.String(20))
     net         = db.Column(db.String(10))
