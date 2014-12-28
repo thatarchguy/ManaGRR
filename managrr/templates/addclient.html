@@ -35,6 +35,9 @@
                         {% for error in AddClientForm.name.errors %}
                             <br /><span style="color: red;">[{{error}}]</span>
                         {% endfor %}
+                        {% if error != None %}
+                            <br /><span style="color: red;">{{ error }}</span>
+                        {% endif %}
                     </div>
                     <div class="form-group">
                         <label for="email">Contact Email: </label>

@@ -52,11 +52,10 @@ def client_admin(client_id, new_client=False):
     new_client = request.args.get('new_client')
     client  = models.Clients.query.get(client_id)
     nodes   = client.nodes.all()
-    digikey = models.Keys.query.filter_by(client_id=client_id).one().digiocean
-    awskey  = models.Keys.query.filter_by(client_id=client_id).one().aws
-
-    CreateNodeForm = CreateNode(digiocean=digikey, aws=awskey)
+    digikey = models.Keys.query.filter_by(client_id=client_id).first().digiocean
+    awskey  = models.Keys.query.filter_by(client_id=client_id).first().aws
     app.logger.info(digikey)
+    CreateNodeForm = CreateNode(digiocean=digikey, aws=awskey)
     if (new_client == None):  # noqa
         new_client = check_status(client.id)
 
@@ -101,56 +100,78 @@ def client_edit(client_id):
 
 @app.route('/clients/add', methods=['POST', 'GET'])
 def client_add():
-
+    error = None
     AddClientForm = AddClient()
     if AddClientForm.validate_on_submit():
-
-        # Add duplicate checking
-
+        #if models.Clients.query.filter_by(name=AddClientForm.name.data).first() is None:
         newClient = models.Clients(name=AddClientForm.name.data, date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                     phone=AddClientForm.phone.data, email=AddClientForm.email.data, size=AddClientForm.size.data)
-        clientKeys = models.Keys(aws=AddClientForm.aws.data, digiocean=AddClientForm.digitalOcean.data, ssh=AddClientForm.ssh.data, client_id=newClient.id)
         db.session.add(newClient)
+        db.session.commit()
+        clientKeys = models.Keys(aws=AddClientForm.aws.data, digiocean=AddClientForm.digitalOcean.data, ssh=AddClientForm.ssh.data, client_id=newClient.id)
         db.session.add(clientKeys)
         db.session.commit()
+        
+        if AddClientForm.aws.data != "":
+            app.logger.info("ClientKey Added: [NEWCLIENT]" + str(newClient.id) + "," + newClient.name + ",aws")
+        if AddClientForm.digitalOcean.data != "":
+             app.logger.info("ClientKey Added: [NEWCLIENT]" + str(newClient.id) + "," + newClient.name + ",digiocean")
+        if AddClientForm.ssh.data != "":
+             app.logger.info("ClientKey Added: [NEWCLIENT]" + str(newClient.id) + "," + newClient.name + ",ssh")
 
         client = models.Clients.query.get(newClient.id)
 
         build_client_local(client, "all")
 
         return redirect(url_for('client_admin', client_id=newClient.id, new_client=True))
-
-    return render_template('addclient.html', title='Add Client', AddClientForm=AddClientForm)
+        #else:
+        #    error = "Client Name is already in use"
+    return render_template('addclient.html', title='Add Client', AddClientForm=AddClientForm, error=error)
 
 
 @app.route('/api/nodes/create/', methods=['POST', 'GET'])
 def node_create(client=None, role=None, location=None):
     if request.method == 'POST':
         clientName  = request.form['client']
-        role        = request.form['roles']
         location    = request.form['location']
-        key         = request.form['key']
+        digiocean   = request.form['digiocean']
+        aws         = request.form['aws']
     # This function was tested in python CLI. Seems to work.
-        clientID = models.Clients.query.filter_by(name=clientName).one().id
+        client = models.Clients.query.filter_by(name=clientName).one()
+        if location == "aws":
+            key = aws
+            clientKey = models.Keys.query.filter_by(client_id=client.id).first()
+            clientKey.aws = key
+            app.logger.info("ClientKey Added: " + str(client.id) + "," + client.name + "," + location)
+            db.session.commit()
+            build_client_aws(client, key)
+        elif location == "digiocean":
+            key = digiocean
+            clientKey = models.Keys.query.filter_by(client_id=client.id).first()
+            clientKey.digiocean = key    
+            app.logger.info("ClientKey Added: " + str(client.id) + "," + client.name + "," + location)
+            db.session.commit()
+            build_client_digiocean(client, key)
+        elif location == "proxmox":
+            build_client_local(client, "worker")
+        else:
+            return "0"
+    # This part is not necessary, functions can directly call the build_client_* functions.
+    # I just wanted a central place to call the functions from.
     elif client is not None:
-        clientID  = client.id
         role        = role
         location    = location
         if location == "aws":
-            key  = models.Keys.query.get(client_id).aws
+            key  = models.Keys.query.get(client.id).aws
+            build_client_aws(client, key)
         elif location == "digiocean":
-            key = models.Keys.query.get(client_id).digiocean
- 
-        
+            key = models.Keys.query.get(client.id).digiocean
+            build_client_digiocean(client, key)
+        elif location == "proxmox":
+            build_client_local(client, "worker")
+
     else:
         return "0"
-   
-    """
-    clientKey = models.Keys(aws=AddClientForm.aws.data, digiocean=AddClientForm.digitalOcean.data, ssh=AddClientForm.ssh.data, client_id=clientID)
-    db.session.add(clientKey)
-    db.session.add(clientKey)
-    db.session.commit()
-    """
 
     return "1"
 
@@ -237,7 +258,7 @@ def build_client_local(client, role):
         return False
     app.logger.info("Building: " + role + " for newclient " + client.name)
     arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n seanconnery" + " -i " + inter
-    subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
+    #subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
     # Due to the nature of the database model, we need to insert basic information about nodes here.
     # They will be updated with ip address upon creation
     if (role == "all"):
@@ -252,4 +273,15 @@ def build_client_local(client, role):
         addWorker = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
         db.session.add(addWorker)
         db.session.commit()
+    return True
+
+
+def build_client_digiocean(client, key):
+    app.logger.info("build_client_digiocean " + str(client.id) + key)
+    return True
+
+
+def build_client_aws(client, key):
+    app.logger.info("build_client_aws " + str(client.id) + key)
+
     return True
