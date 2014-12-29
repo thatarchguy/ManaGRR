@@ -66,6 +66,18 @@
             </div>
         </div>
     </div>
+    <div class="col-lg-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                Delete Client
+             </div>
+            <div class="panel-body">
+            <a class="btn btn-danger" id="deletebtn" disabled="disabled" href="/client/{{ client.id }}/delete/">Delete</a>
+            <br />
+            <input type="checkbox" id="deletechk">   Are you sure?</input>
+            </div>
+        </div>
+    </div>
 
 
 </div>
@@ -145,6 +157,10 @@ $(document).ready(function() {
             }
 
     });
+
+    $("#deletechk").click(function() {
+      $("#deletebtn").attr("disabled", !this.checked);
+    });
 });
 
 $("#worker").submit(function(e)
@@ -168,6 +184,9 @@ $("#worker").submit(function(e)
     e.preventDefault(); //STOP default action
     e.unbind(); //unbind. to stop multiple form submit.
 });
+
+
+
 
 {% endif %}
 </script>

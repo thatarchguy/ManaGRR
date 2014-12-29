@@ -54,7 +54,6 @@ def client_admin(client_id, new_client=False):
     nodes   = client.nodes.all()
     digikey = models.Keys.query.filter_by(client_id=client_id).first().digiocean
     awskey  = models.Keys.query.filter_by(client_id=client_id).first().aws
-    app.logger.info(digikey)
     CreateNodeForm = CreateNode(digiocean=digikey, aws=awskey)
     if (new_client == None):  # noqa
         new_client = check_status(client.id)
@@ -65,6 +64,24 @@ def client_admin(client_id, new_client=False):
                             nodes=nodes,
                             CreateNodeForm=CreateNodeForm,
                             new_client=new_client)
+
+
+@app.route('/client/<int:client_id>/delete/')
+def client_delete(client_id):
+    client  = models.Clients.query.get(client_id)
+    nodes   = models.Nodes.query.filter_by(client_id=client.id)
+    keys    = models.Keys.query.filter_by(client_id=client.id).first()
+
+    # Delete nodes...call bash script
+    # Delete from database
+
+    db.session.delete(keys)
+    for node in nodes:
+        db.session.delete(node)
+    db.session.delete(client)
+    db.session.commit()
+
+    return redirect(url_for('index_view'))
 
 
 @app.route('/client/<int:client_id>/admin/edit', methods=['POST'])
@@ -103,29 +120,29 @@ def client_add():
     error = None
     AddClientForm = AddClient()
     if AddClientForm.validate_on_submit():
-        #if models.Clients.query.filter_by(name=AddClientForm.name.data).first() is None:
-        newClient = models.Clients(name=AddClientForm.name.data, date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                    phone=AddClientForm.phone.data, email=AddClientForm.email.data, size=AddClientForm.size.data)
-        db.session.add(newClient)
-        db.session.commit()
-        clientKeys = models.Keys(aws=AddClientForm.aws.data, digiocean=AddClientForm.digitalOcean.data, ssh=AddClientForm.ssh.data, client_id=newClient.id)
-        db.session.add(clientKeys)
-        db.session.commit()
-        
-        if AddClientForm.aws.data != "":
-            app.logger.info("ClientKey Added: [NEWCLIENT]" + str(newClient.id) + "," + newClient.name + ",aws")
-        if AddClientForm.digitalOcean.data != "":
-             app.logger.info("ClientKey Added: [NEWCLIENT]" + str(newClient.id) + "," + newClient.name + ",digiocean")
-        if AddClientForm.ssh.data != "":
-             app.logger.info("ClientKey Added: [NEWCLIENT]" + str(newClient.id) + "," + newClient.name + ",ssh")
+        if models.Clients.query.filter_by(name=AddClientForm.name.data).first() is None:
+            newClient = models.Clients(name=AddClientForm.name.data, date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                        phone=AddClientForm.phone.data, email=AddClientForm.email.data, size=AddClientForm.size.data)
+            db.session.add(newClient)
+            db.session.commit()
+            clientKeys = models.Keys(aws=AddClientForm.aws.data, digiocean=AddClientForm.digitalOcean.data, ssh=AddClientForm.ssh.data, client_id=newClient.id)
+            db.session.add(clientKeys)
+            db.session.commit()
 
-        client = models.Clients.query.get(newClient.id)
+            if AddClientForm.aws.data != "":
+                app.logger.info("ClientKey Added: [NEWCLIENT]" + str(newClient.id) + "," + newClient.name + ",aws")
+            if AddClientForm.digitalOcean.data != "":
+                app.logger.info("ClientKey Added: [NEWCLIENT]" + str(newClient.id) + "," + newClient.name + ",digiocean")
+            if AddClientForm.ssh.data != "":
+                app.logger.info("ClientKey Added: [NEWCLIENT]" + str(newClient.id) + "," + newClient.name + ",ssh")
 
-        build_client_local(client, "all")
+            client = models.Clients.query.get(newClient.id)
 
-        return redirect(url_for('client_admin', client_id=newClient.id, new_client=True))
-        #else:
-        #    error = "Client Name is already in use"
+            build_client_local(client, "all")
+
+            return redirect(url_for('client_admin', client_id=newClient.id, new_client=True))
+        else:
+            error = "Client Name is already in use"
     return render_template('addclient.html', title='Add Client', AddClientForm=AddClientForm, error=error)
 
 
@@ -148,7 +165,7 @@ def node_create(client=None, role=None, location=None):
         elif location == "digiocean":
             key = digiocean
             clientKey = models.Keys.query.filter_by(client_id=client.id).first()
-            clientKey.digiocean = key    
+            clientKey.digiocean = key
             app.logger.info("ClientKey Added: " + str(client.id) + "," + client.name + "," + location)
             db.session.commit()
             build_client_digiocean(client, key)
@@ -258,7 +275,7 @@ def build_client_local(client, role):
         return False
     app.logger.info("Building: " + role + " for newclient " + client.name)
     arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n seanconnery" + " -i " + inter
-    #subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
+    subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
     # Due to the nature of the database model, we need to insert basic information about nodes here.
     # They will be updated with ip address upon creation
     if (role == "all"):
