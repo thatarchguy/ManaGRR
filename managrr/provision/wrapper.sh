@@ -67,17 +67,19 @@ then
      exit 1
 fi
 
-if [  -f $CID.lockfile ]; then
+if [ -f $CID.lockfile ] || [ -f $CID.worker.lockfile ]; then
     exit 1
 fi
 
+
+
 if [[ $ROLE =~ "worker" ]]; then
-     echo "sysprep" > $CID.lockfile
+     echo "sysprep" > $CID.worker.lockfile
      ./sysprep.sh -c $CLIENT -r worker
-     echo "proxmox" > $CID.lockfile
+     echo "proxmox" > $CID.worker.lockfile
      ./proxmox.sh -c $CLIENT -v $VID -r worker -n $NODE -i $INTERFACE
-     echo "installing" > $CID.lockfile
-     rm -f $CID.lockfile
+     echo "installing" > $CID.worker.lockfile
+     rm -f $CID.worker.lockfile
 elif [[ $ROLE =~ "DB" ]]; then
      echo "sysprep" > $CID.lockfile
      ./sysprep.sh -c $CLIENT -r DB

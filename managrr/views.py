@@ -50,6 +50,8 @@ def clients_view():
 @app.route('/client/<int:client_id>/admin/')
 def client_admin(client_id, new_client=False):
     new_client = request.args.get('new_client')
+    new_worker = request.args.get('new_worker')
+    client  = models.Clients.query.get(client_id)
     client  = models.Clients.query.get(client_id)
     nodes   = client.nodes.all()
     digikey = models.Keys.query.filter_by(client_id=client_id).first().digiocean
@@ -57,13 +59,15 @@ def client_admin(client_id, new_client=False):
     CreateNodeForm = CreateNode(digiocean=digikey, aws=awskey)
     if (new_client == None):  # noqa
         new_client = check_status(client.id)
-
+    if (new_worker == None):  # noqa
+        new_worker = check_status(client.id, "worker")
     return render_template('clientadmin.html',
                             title=client.name,
                             client=client,
                             nodes=nodes,
                             CreateNodeForm=CreateNodeForm,
-                            new_client=new_client)
+                            new_client=new_client,
+                            new_worker=new_worker)
 
 
 @app.route('/client/<int:client_id>/delete/')
@@ -193,6 +197,19 @@ def node_create(client=None, role=None, location=None):
     return "1"
 
 
+@app.route('/api/nodes/delete/<int:node_id>')
+def node_delete(node_id):
+
+    # Bash scripts to delete node
+
+    # Database work
+    node  = models.Nodes.query.get(node_id)
+    db.session.delete(node)
+    db.session.commit()
+
+    return "1"
+
+
 @app.route('/api/nodes/checkin/', methods=['GET'])
 def node_checkin():
     clientName  = request.args.get('client')
@@ -229,6 +246,19 @@ def client_status(client_id):
         else:
             percent = "10"
         return percent
+    elif (os.path.isfile("managrr/provision/" + str(client_id) + ".worker.lockfile")):
+        with open("managrr/provision/" + str(client_id) + ".worker.lockfile", 'r') as f:
+            status = f.readline()
+            f.close()
+        if str(status.rstrip()) == "sysprep":
+            percent = "30"
+        elif str(status.rstrip()) == "proxmox":
+            percent = "50"
+        elif str(status.rstrip()) == "installing":
+            percent = "80"
+        else:
+            percent = "10"
+        return percent
     return "0"
 
 
@@ -246,10 +276,13 @@ def settings_view():
     return render_template('settings.html', title="Settings")
 
 
-def check_status(client_id):
-    if (os.path.isfile("managrr/provision/" + str(client_id) + ".lockfile")):
-        return True
-
+def check_status(client_id, role="all"):
+    if (role == "all"):
+        if (os.path.isfile("managrr/provision/" + str(client_id) + ".lockfile")):
+            return True
+    if (role == "worker"):
+        if (os.path.isfile("managrr/provision/" + str(client_id) + ".worker.lockfile")):
+            return True
     return False
 
 
