@@ -137,7 +137,7 @@
             <td>{{ node.IP }}</td>
             <td>{{ node.date_added }} </td>
             {% if node.type == "worker" %}
-            <td><a class="btn btn-danger" href="/api/nodes/delete/{{ node.id }}">Delete</a></td>
+            <td><a class="btn btn-danger" id="delete-{{ node.id }}" onclick="deleteNode(this,{{ node.id }})">Delete</a></td>
             {% else %}
             <td></td>
             {% endif %}
@@ -216,8 +216,7 @@ $(document).ready(function() {
     });
 });
 
-$("#worker").submit(function(e)
-{
+$("#worker").submit(function(e) {
     var postData = $(this).serializeArray();
     var formURL = "/api/nodes/create/"
     $.ajax(
@@ -238,6 +237,24 @@ $("#worker").submit(function(e)
     e.unbind(); //unbind. to stop multiple form submit.
 });
 
+function deleteNode(ele, id) {    
+    var formURL = "/api/nodes/delete/" + id;
+    $.ajax(
+    {
+        url : formURL,
+        context: document.body,
+        success:function(data, textStatus, jqXHR) 
+        {
+            if (data == "1"){
+                $(this).removeClass("btn-danger");
+            } else {
+                alert("OOPS, there was an error!");
+            }
+        }
+    });
+    $(ele).addClass("disabled");
+    $(ele).text("Deleted");
+}
 
 
 
