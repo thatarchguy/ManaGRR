@@ -25,17 +25,26 @@ def index_view():
 
     # SQLAlchemy to get total clients
     clientCount = models.Clients.query.count()
-    nodeCount   = models.Nodes.query.count()
+    hyperCount   = models.Hypervisors.query.count()
 
     return render_template('index.html',
                             title="Dashboard",
                             clientCount=clientCount,
-                            nodeCount=nodeCount)
+                            hyperCount=hyperCount)
 
 
 @app.route('/login')
 def login_view():
     return render_template('login.html')
+
+
+@app.route('/hypervisors')
+def hypervisors_view():
+
+    # SQLAlchemy functions here
+    hypervisors = models.Hypervisors.query.all()
+
+    return render_template('hypervisors.html', title="Hypervisors", entries=hypervisors)
 
 
 @app.route('/clients')

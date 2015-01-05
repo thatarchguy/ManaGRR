@@ -14,12 +14,30 @@ class Nodes(db.Model):
     type        = db.Column(db.String(20))
     date_added  = db.Column(db.String(20))
     location    = db.Column(db.String(30))
+    hyperv_id   = db.Column(db.Integer, db.ForeignKey('hypervisors.id'))
     IP          = db.Column(db.String(20))
     net         = db.Column(db.String(10))
     vid         = db.Column(db.Integer)
 
     def __repr__(self):
         return '<Type %r>' % (self.type)
+
+
+class Hypervisors(db.Model):
+    """
+    Database Model for Hypervisorss
+
+    models.Hypervisors(location="RACK14-2", IP="192.168.1.15", status="1")
+
+    status codes:   0 - offline
+                    1 - online
+                    2 - maintenance
+                    3 - oops
+    """
+    id          = db.Column(db.Integer, primary_key=True)
+    location    = db.Column(db.String(30))
+    IP          = db.Column(db.String(20))
+    status      = db.Column(db.Integer)
 
 
 class Keys(db.Model):

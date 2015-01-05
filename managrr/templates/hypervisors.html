@@ -23,9 +23,8 @@
     <thead>
         <tr>
             <th>#</th>
-            <th>Hypervisor</th>
-            <th>Date Added</th>
-            <th>Nodes Connected</th>
+            <th>IP</th>
+            <th>Location</th>
             <th></th>
         </tr>
     </thead>
@@ -33,10 +32,17 @@
     {% for entry in entries %}
         <tr>
             <td>{{ entry.id }} </td>
-            <td>{{ entry. }} </td>
-            <td>{{ entry.date_added }} </td>
-            <td>{{ entry.nodes.count() }}</td>
-            <td><a class="btn" href="client/{{ entry.id }}/admin">Admin</a>
+            <td>{{ entry.IP }} </td>
+            <td>{{ entry.location }} </td>
+            {% if entry.status == 0 %}
+            <td><a class="btn btn-danger" href="http://{{ entry.IP }}:8006">Offline</a>
+            {% elif entry.status == 1 %}
+            <td><a class="btn btn-success" href="http://{{ entry.IP }}:8006">Online</a>
+            {% elif entry.status == 2 %}
+            <td><a class="btn btn-warning" href="http://{{ entry.IP }}:8006">Maintenance</a>
+            {% elif entry.status == 3 %}
+            <td><a class="btn btn-info" href="http://{{ entry.IP }}:8006">Error</a>
+            {% endif %} 
         </tr>
      {% endfor %}
         
