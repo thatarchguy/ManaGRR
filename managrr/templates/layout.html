@@ -52,7 +52,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="index.html">GRRManager</a>
+                <a class="navbar-brand" href="/index">GRRManager</a>
             </div>
             <!-- /.navbar-header -->
 
@@ -124,13 +124,25 @@
                             <a {% if active_page == "index" %}class="active" {% endif %}href="/index"><i class="fa fa-dashboard fa-fw"></i> Dashboard</a>
                         </li>
                         <li>
-                            <a href="#"><i class="fa fa-bar-chart-o fa-fw"></i> Clients<span class="fa arrow"></span></a>
+                            <a href="#"><i class="fa fa-group fa-fw"></i> Clients<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
                                 <li>
                                     <a {% if active_page == "view" %}class="active" {% endif %} href="/clients">View Clients</a>
                                 </li>
                                 <li>
                                     <a {% if active_page == "add" %}class="active" {% endif %} href="/clients/add">Add Client</a>
+                                </li>
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+                        <li>
+                            <a href="#"><i class="fa fa-tasks fa-fw"></i> Hypervisors<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a {% if active_page == "view_h" %}class="active" {% endif %} href="/hypervisors">View Hypervisors</a>
+                                </li>
+                                <li>
+                                    <a {% if active_page == "add_h" %}class="active" {% endif %} href="/hypervisors/add">Add Hypervisor</a>
                                 </li>
                             </ul>
                             <!-- /.nav-second-level -->
@@ -175,11 +187,9 @@
     <!-- jeditable JavaScript -->
     <script src="{{ url_for('static', filename='js/plugins/jquery.jeditable.js') }} "></script>
 
-    <!-- Morris Charts JavaScript
+    <!-- Morris Charts JavaScript -->
     <script src="{{ url_for('static', filename='js/plugins/morris/raphael.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/plugins/morris/morris.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/plugins/morris/morris-data.js') }}"></script>
-    -->
 
     <!-- Custom Theme JavaScript -->
     <script src="{{ url_for('static', filename='js/sb-admin-2.js') }}"></script>

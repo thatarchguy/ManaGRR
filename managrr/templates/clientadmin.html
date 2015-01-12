@@ -18,7 +18,6 @@
 {% endblock %}
 
 {% block content %}
-{{ new_client }}
 <div class="row">
     <div class="col-lg-6">
         <div class="panel panel-default">
@@ -46,22 +45,30 @@
 </div>
 
 
-
-
-{% else %}
+{% elif new_worker %}
     <div class="col-lg-6">
         <div class="panel panel-default">
             <div class="panel-heading">
                 Add Worker to Cluster
              </div>
             <div class="panel-body">
-            <form>
-            {{ CreateNodeForm.hidden_tag() }}
-            {{ CreateNodeForm.locations }}
-            {{ CreateNodeForm.digitalOcean(size=50) }}
-            {{ CreateNodeForm.aws(size=50) }}
-            <input type="submit" value="Create">
-            </form>
+                <p><h3>Status</h3></p>
+                <div class="progress active">
+                  <div class="progress-bar progress-bar-success progress-bar-striped active" id="progress" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 10%">
+                  </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                Delete Client
+             </div>
+            <div class="panel-body">
+            <a class="btn btn-danger" id="deletebtn" disabled="disabled" href="/client/{{ client.id }}/delete/">Delete</a>
+            <br />
+            <input type="checkbox" id="deletechk" disabled="disabled">   Are you sure?</input>
             </div>
         </div>
     </div>
@@ -71,6 +78,45 @@
 
 
 
+
+{% else %}
+    <div class="col-lg-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                Add Worker to Cluster
+             </div>
+            <div class="panel-body">
+            <form id="worker" method="POST" action="" onsubmit="postForm(); return false;">
+            {{ CreateNodeForm.hidden_tag() }}
+            {{ CreateNodeForm.location }}
+            {{ CreateNodeForm.digiocean(size=50) }}
+            {{ CreateNodeForm.aws(size=50) }}
+            <input type="hidden" name="client" value="{{ client.name }}">
+            
+            <input type="submit" value="Create">
+            </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                Delete Client
+             </div>
+            <div class="panel-body">
+            <a class="btn btn-danger" id="deletebtn" disabled="disabled" href="/client/{{ client.id }}/delete/">Delete</a>
+            <br />
+            <input type="checkbox" id="deletechk">   Are you sure?</input>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+{% endif %}
+{% if new_client != 'True' %}
+
 <table class="table table-hover">
     <thead>
         <tr>
@@ -78,6 +124,7 @@
             <th>Type</th>
             <th>Location</th>
             <th>IP</th>
+            <th>Date</th>
             <th></th>
         </tr>
     </thead>
@@ -88,8 +135,9 @@
             <td>{{ node.type }} </td>
             <td>{{ node.location }} </td>
             <td>{{ node.IP }}</td>
+            <td>{{ node.date_added }} </td>
             {% if node.type == "worker" %}
-            <td><a class="btn btn-danger" href="node/{{ node.id }}/delete">Delete</a></td>
+            <td><a class="btn btn-danger" id="delete-{{ node.id }}" onclick="deleteNode(this,{{ node.id }})">Delete</a></td>
             {% else %}
             <td></td>
             {% endif %}
@@ -125,27 +173,90 @@ $(document).ready(function(){
     })
   }, 5000);});
 
+{% elif new_worker %}
+$(document).ready(function(){
+  var progresspump = setInterval(function(){
+    /* query the completion percentage from the server */
+    $.get("/client/{{ client.id }}/status", function(data){
+      /* update the progress bar width */
+      $("#progress").css('width',data+'%');
+      /* and display the numeric value */
+      $("#progress").html(data+'%');
+      /* test to see if the job has completed */
+      if(data > 99.999) {
+        clearInterval(progresspump);
+        $("#progressouter").removeClass("active");
+        $("#progress").html("Done");
+        window.location.href = "/client/{{ client.id}}/admin"
+      }
+    })
+  }, 5000);});
+
+
 {% else %}
 $(document).ready(function() {
-    $('#digitalOcean').css('display','none');
+    $('#digiocean').css('display','none');
     $('#aws').css('display','none');
-    $('#locations').change(function(){
-        if(document.getElementById('locations').value == 'digiocean'){
-            $('#digitalOcean').css('display', 'inline');    
+    $('#location').change(function(){
+        if(document.getElementById('location').value == 'digiocean'){
+            $('#digiocean').css('display', 'inline');    
              $('#aws').css('display','none');
-
-        }else 
-            if(document.getElementById('locations').value == 'aws'){
-
+        }else if(document.getElementById('location').value == 'aws'){
              $('#aws').css('display','inline');
-             $('#digitalOcean').css('display', 'none'); 
+             $('#digiocean').css('display', 'none'); 
         }else {
-             $('#digitalOcean').css('display', 'none');
+             $('#digiocean').css('display', 'none');
              $('#aws').css('display','none');
             }
 
     });
+
+    $("#deletechk").click(function() {
+      $("#deletebtn").attr("disabled", !this.checked);
+    });
 });
+
+$("#worker").submit(function(e) {
+    var postData = $(this).serializeArray();
+    var formURL = "/api/nodes/create/"
+    $.ajax(
+    {
+        url : formURL,
+        type: "POST",
+        data : postData,
+        success:function(data, textStatus, jqXHR)
+        {
+            window.location = "?new_worker=true";
+        },
+        error: function(jqXHR, textStatus, errorThrown)
+        {
+            //if fails     
+        }
+    });
+    e.preventDefault(); //STOP default action
+    e.unbind(); //unbind. to stop multiple form submit.
+});
+
+function deleteNode(ele, id) {    
+    var formURL = "/api/nodes/delete/" + id;
+    $.ajax(
+    {
+        url : formURL,
+        context: document.body,
+        success:function(data, textStatus, jqXHR) 
+        {
+            if (data == "1"){
+                $(this).removeClass("btn-danger");
+            } else {
+                alert("OOPS, there was an error!");
+            }
+        }
+    });
+    $(ele).addClass("disabled");
+    $(ele).text("Deleted");
+}
+
+
 
 {% endif %}
 </script>

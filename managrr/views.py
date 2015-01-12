@@ -1,6 +1,6 @@
 from flask import render_template, request, flash, redirect, url_for
 from managrr import app, db, models
-from .forms import CreateNode, AddClient
+from .forms import CreateNode, AddClient, AddHyper
 import os
 import datetime
 import subprocess
@@ -25,17 +25,43 @@ def index_view():
 
     # SQLAlchemy to get total clients
     clientCount = models.Clients.query.count()
-    nodeCount   = models.Nodes.query.count()
+    hyperCount   = models.Hypervisors.query.count()
 
     return render_template('index.html',
                             title="Dashboard",
                             clientCount=clientCount,
-                            nodeCount=nodeCount)
+                            hyperCount=hyperCount)
 
 
 @app.route('/login')
 def login_view():
     return render_template('login.html')
+
+
+@app.route('/hypervisors')
+def hypervisors_view():
+
+    # SQLAlchemy functions here
+    hypervisors = models.Hypervisors.query.all()
+
+    return render_template('hypervisors.html', title="Hypervisors", entries=hypervisors)
+
+
+@app.route('/hypervisors/add', methods=['POST', 'GET'])
+def hypervisor_add():
+    error = None
+    AddHyperForm = AddHyper()
+    if AddHyperForm.validate_on_submit():
+        if models.Hypervisors.query.filter_by(IP=AddHyperForm.ip.data).first() is None:
+            newHypervisor = models.Hypervisors(location=AddHyperForm.location.data, IP=AddHyperForm.ip.data)
+            db.session.add(newHypervisor)
+            db.session.commit()
+
+            return redirect('/hypervisors')
+        else:
+            error = "Client IP is already in use"
+
+    return render_template('addhyper.html', title="Add Hypervisor", AddHyperForm=AddHyperForm, error=error)
 
 
 @app.route('/clients')
@@ -50,22 +76,42 @@ def clients_view():
 @app.route('/client/<int:client_id>/admin/')
 def client_admin(client_id, new_client=False):
     new_client = request.args.get('new_client')
+    new_worker = request.args.get('new_worker')
+    client  = models.Clients.query.get(client_id)
     client  = models.Clients.query.get(client_id)
     nodes   = client.nodes.all()
-    digikey = models.Keys.query.get(client_id).digiocean
-    awskey  = models.Keys.query.get(client_id).aws
-
-    CreateNodeForm = CreateNode(digitalOcean=digikey, aws=awskey)
-
+    digikey = models.Keys.query.filter_by(client_id=client_id).first().digiocean
+    awskey  = models.Keys.query.filter_by(client_id=client_id).first().aws
+    CreateNodeForm = CreateNode(digiocean=digikey, aws=awskey)
     if (new_client == None):  # noqa
         new_client = check_status(client.id)
-
+    if (new_worker == None):  # noqa
+        new_worker = check_status(client.id, "worker")
     return render_template('clientadmin.html',
                             title=client.name,
                             client=client,
                             nodes=nodes,
                             CreateNodeForm=CreateNodeForm,
-                            new_client=new_client)
+                            new_client=new_client,
+                            new_worker=new_worker)
+
+
+@app.route('/client/<int:client_id>/delete/')
+def client_delete(client_id):
+    client  = models.Clients.query.get(client_id)
+    nodes   = models.Nodes.query.filter_by(client_id=client.id)
+    keys    = models.Keys.query.filter_by(client_id=client.id).first()
+
+    # Delete nodes...call bash script
+    # Delete from database
+
+    db.session.delete(keys)
+    for node in nodes:
+        db.session.delete(node)
+    db.session.delete(client)
+    db.session.commit()
+
+    return redirect(url_for('index_view'))
 
 
 @app.route('/client/<int:client_id>/admin/edit', methods=['POST'])
@@ -101,28 +147,96 @@ def client_edit(client_id):
 
 @app.route('/clients/add', methods=['POST', 'GET'])
 def client_add():
+    error = None
     AddClientForm = AddClient()
     if AddClientForm.validate_on_submit():
+        if models.Clients.query.filter_by(name=AddClientForm.name.data).first() is None:
+            newClient = models.Clients(name=AddClientForm.name.data, date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                        phone=AddClientForm.phone.data, email=AddClientForm.email.data, size=AddClientForm.size.data)
+            db.session.add(newClient)
+            db.session.commit()
+            clientKeys = models.Keys(aws=AddClientForm.aws.data, digiocean=AddClientForm.digitalOcean.data, ssh=AddClientForm.ssh.data, client_id=newClient.id)
+            db.session.add(clientKeys)
+            db.session.commit()
 
-        # Add duplicate checking
+            if AddClientForm.aws.data != "":
+                app.logger.info("ClientKey Added: [NEWCLIENT]" + str(newClient.id) + "," + newClient.name + ",aws")
+            if AddClientForm.digitalOcean.data != "":
+                app.logger.info("ClientKey Added: [NEWCLIENT]" + str(newClient.id) + "," + newClient.name + ",digiocean")
+            if AddClientForm.ssh.data != "":
+                app.logger.info("ClientKey Added: [NEWCLIENT]" + str(newClient.id) + "," + newClient.name + ",ssh")
 
-        newClient = models.Clients(name=AddClientForm.name.data, date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                    phone=AddClientForm.phone.data, email=AddClientForm.email.data, size=AddClientForm.size.data)
-        clientKeys = models.Keys(aws=AddClientForm.aws.data, digiocean=AddClientForm.digitalOcean.data, ssh=AddClientForm.ssh.data, client_id=newClient.id)
-        db.session.add(newClient)
-        db.session.add(clientKeys)
-        db.session.commit()
+            client = models.Clients.query.get(newClient.id)
 
-        client = models.Clients.query.get(newClient.id)
+            build_client_local(client, "all")
 
-        build_client(client, "all")
-
-        return redirect(url_for('client_admin', client_id=newClient.id, new_client=True))
-
-    return render_template('addclient.html', title='Add Client', AddClientForm=AddClientForm)
+            return redirect(url_for('client_admin', client_id=newClient.id, new_client=True))
+        else:
+            error = "Client Name is already in use"
+    return render_template('addclient.html', title='Add Client', AddClientForm=AddClientForm, error=error)
 
 
-@app.route('/clients/checkin/', methods=['GET'])
+@app.route('/api/nodes/create/', methods=['POST', 'GET'])
+def node_create(client=None, role=None, location=None):
+    if request.method == 'POST':
+        clientName  = request.form['client']
+        location    = request.form['location']
+        digiocean   = request.form['digiocean']
+        aws         = request.form['aws']
+    # This function was tested in python CLI. Seems to work.
+        client = models.Clients.query.filter_by(name=clientName).one()
+        if location == "aws":
+            key = aws
+            clientKey = models.Keys.query.filter_by(client_id=client.id).first()
+            clientKey.aws = key
+            app.logger.info("ClientKey Added: " + str(client.id) + "," + client.name + "," + location)
+            db.session.commit()
+            build_client_aws(client, key)
+        elif location == "digiocean":
+            key = digiocean
+            clientKey = models.Keys.query.filter_by(client_id=client.id).first()
+            clientKey.digiocean = key
+            app.logger.info("ClientKey Added: " + str(client.id) + "," + client.name + "," + location)
+            db.session.commit()
+            build_client_digiocean(client, key)
+        elif location == "proxmox":
+            build_client_local(client, "worker")
+        else:
+            return "0"
+    # This part is not necessary, functions can directly call the build_client_* functions.
+    # I just wanted a central place to call the functions from.
+    elif client is not None:
+        role        = role
+        location    = location
+        if location == "aws":
+            key  = models.Keys.query.get(client.id).aws
+            build_client_aws(client, key)
+        elif location == "digiocean":
+            key = models.Keys.query.get(client.id).digiocean
+            build_client_digiocean(client, key)
+        elif location == "proxmox":
+            build_client_local(client, "worker")
+
+    else:
+        return "0"
+
+    return "1"
+
+
+@app.route('/api/nodes/delete/<int:node_id>')
+def node_delete(node_id):
+
+    # Bash scripts to delete node
+
+    # Database work
+    node  = models.Nodes.query.get(node_id)
+    db.session.delete(node)
+    db.session.commit()
+
+    return "1"
+
+
+@app.route('/api/nodes/checkin/', methods=['GET'])
 def node_checkin():
     clientName  = request.args.get('client')
     role        = request.args.get('role')
@@ -135,9 +249,10 @@ def node_checkin():
     node = models.Nodes.query.filter_by(client_id=clientID, type=role, IP='0.0.0.0').one()
     node.IP = ip
     db.session.commit()
+    app.logger.info(clientName + " " + role + " " + ip + " Checked in")
 
     # Some nonexistent error checking straight to ok
-    status = 1
+    status = "1"
 
     return status
 
@@ -157,7 +272,29 @@ def client_status(client_id):
         else:
             percent = "10"
         return percent
+    elif (os.path.isfile("managrr/provision/" + str(client_id) + ".worker.lockfile")):
+        with open("managrr/provision/" + str(client_id) + ".worker.lockfile", 'r') as f:
+            status = f.readline()
+            f.close()
+        if str(status.rstrip()) == "sysprep":
+            percent = "30"
+        elif str(status.rstrip()) == "proxmox":
+            percent = "50"
+        elif str(status.rstrip()) == "installing":
+            percent = "80"
+        else:
+            percent = "10"
+        return percent
     return "0"
+
+
+@app.route('/api/nodes/history')
+def node_history():
+    # I need to finish the 'add worker' problem before I work on this
+    # Query database count all for latest
+    jsondumps = "boilerplate"
+
+    return jsondumps
 
 
 @app.route('/settings')
@@ -165,14 +302,17 @@ def settings_view():
     return render_template('settings.html', title="Settings")
 
 
-def check_status(client_id):
-    if (os.path.isfile("managrr/provision/" + str(client_id) + ".lockfile")):
-        return True
-
+def check_status(client_id, role="all"):
+    if (role == "all"):
+        if (os.path.isfile("managrr/provision/" + str(client_id) + ".lockfile")):
+            return True
+    if (role == "worker"):
+        if (os.path.isfile("managrr/provision/" + str(client_id) + ".worker.lockfile")):
+            return True
     return False
 
 
-def build_client(client, role):
+def build_client_local(client, role):
     lastVid = models.Nodes.query.order_by(models.Nodes.vid.desc()).first()
     if lastVid is None:
         vid = 200
@@ -192,20 +332,32 @@ def build_client(client, role):
         inter = str(clientInterface.net)
     if check_status(client.id) is True:
         return False
+    app.logger.info("Building: " + role + " for newclient " + client.name)
     arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n seanconnery" + " -i " + inter
     subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
     # Due to the nature of the database model, we need to insert basic information about nodes here.
     # They will be updated with ip address upon creation
     if (role == "all"):
-        addWorker   = models.Nodes(client_id=client.id, type="worker", location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
-        addDatabase = models.Nodes(client_id=client.id, type="database", location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
-        addControl  = models.Nodes(client_id=client.id, type="control", location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
+        addWorker   = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
+        addDatabase = models.Nodes(client_id=client.id, type="database", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
+        addControl  = models.Nodes(client_id=client.id, type="control", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
         db.session.add(addWorker)
         db.session.add(addDatabase)
         db.session.add(addControl)
         db.session.commit()
     elif (role == "worker"):
-        models.Nodes(client_id=client.id, type="worker", location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
+        addWorker = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
         db.session.add(addWorker)
         db.session.commit()
+    return True
+
+
+def build_client_digiocean(client, key):
+    app.logger.info("build_client_digiocean " + str(client.id) + key)
+    return True
+
+
+def build_client_aws(client, key):
+    app.logger.info("build_client_aws " + str(client.id) + key)
+
     return True

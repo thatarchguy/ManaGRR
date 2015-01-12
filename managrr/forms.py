@@ -5,8 +5,8 @@ from managrr import models, db
 
 
 class CreateNode(Form):
-    locations       = SelectField(u'Location', choices=[('proxmox', 'Local (Proxmox)'), ('digiocean', 'DigitalOcean'), ('aws', 'AWS')], validators=[DataRequired()])
-    digitalOcean    = StringField(u'DOkey')
+    location        = SelectField(u'Location', choices=[('proxmox', 'Local (Proxmox)'), ('digiocean', 'DigitalOcean'), ('aws', 'AWS')], validators=[DataRequired()])
+    digiocean       = StringField(u'DOkey')
     aws             = StringField(u'awskey')
 
 
@@ -18,3 +18,8 @@ class AddClient(Form):
     digitalOcean    = StringField(u'DOkey')
     aws             = StringField(u'awskey')
     ssh             = StringField(u'sshkey')
+
+
+class AddHyper(Form):
+    location        = StringField(u'location', validators=[DataRequired()])
+    ip              = StringField(u'ip', validators=[DataRequired()])

@@ -20,6 +20,7 @@ clean:
 	find . -name '*.pyo' -exec rm -f {} \;
 	find . -name '*~' -exec rm -f {} \;
 	find . -name '__pycache__' -exec rmdir {} \;
+	rm -f managrr.log
 
 lint:
 	flake8 --ignore E127,E221,F401 --max-line-length=220 --exclude=db_repository,tests,env .
