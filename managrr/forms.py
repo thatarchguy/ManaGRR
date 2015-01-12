@@ -18,3 +18,8 @@ class AddClient(Form):
     digitalOcean    = StringField(u'DOkey')
     aws             = StringField(u'awskey')
     ssh             = StringField(u'sshkey')
+
+
+class AddHyper(Form):
+    location        = StringField(u'location', validators=[DataRequired()])
+    ip              = StringField(u'ip', validators=[DataRequired()])

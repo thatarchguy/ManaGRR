@@ -1,6 +1,6 @@
 from flask import render_template, request, flash, redirect, url_for
 from managrr import app, db, models
-from .forms import CreateNode, AddClient
+from .forms import CreateNode, AddClient, AddHyper
 import os
 import datetime
 import subprocess
@@ -45,6 +45,23 @@ def hypervisors_view():
     hypervisors = models.Hypervisors.query.all()
 
     return render_template('hypervisors.html', title="Hypervisors", entries=hypervisors)
+
+
+@app.route('/hypervisors/add', methods=['POST', 'GET'])
+def hypervisor_add():
+    error = None
+    AddHyperForm = AddHyper()
+    if AddHyperForm.validate_on_submit():
+        if models.Hypervisors.query.filter_by(IP=AddHyperForm.ip.data).first() is None:
+            newHypervisor = models.Hypervisors(location=AddHyperForm.location.data, IP=AddHyperForm.ip.data)
+            db.session.add(newHypervisor)
+            db.session.commit()
+
+            return redirect('/hypervisors')
+        else:
+            error = "Client IP is already in use"
+
+    return render_template('addhyper.html', title="Add Hypervisor", AddHyperForm=AddHyperForm, error=error)
 
 
 @app.route('/clients')
