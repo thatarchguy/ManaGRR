@@ -5,7 +5,7 @@ import os
 import datetime
 import subprocess
 import re
-
+import random
 
 @app.errorhandler(404)
 def not_found_error(error):
@@ -82,7 +82,8 @@ def client_admin(client_id, new_client=False):
     nodes   = client.nodes.all()
     digikey = models.Keys.query.filter_by(client_id=client_id).first().digiocean
     awskey  = models.Keys.query.filter_by(client_id=client_id).first().aws
-    CreateNodeForm = CreateNode(digiocean=digikey, aws=awskey)
+    hypervisorIP    = models.Hypervisors.query.get(client.hyperv_id).IP 
+    CreateNodeForm  = CreateNode(digiocean=digikey, aws=awskey)
     if (new_client == None):  # noqa
         new_client = check_status(client.id)
     if (new_worker == None):  # noqa
@@ -93,7 +94,8 @@ def client_admin(client_id, new_client=False):
                             nodes=nodes,
                             CreateNodeForm=CreateNodeForm,
                             new_client=new_client,
-                            new_worker=new_worker)
+                            new_worker=new_worker,
+                            hypervisorIP=hypervisorIP)
 
 
 @app.route('/client/<int:client_id>/delete/')
@@ -149,11 +151,16 @@ def client_edit(client_id):
 def client_add():
     error = None
     AddClientForm = AddClient()
+    AddClientForm.hyperv.choices = [(a.IP, a.IP) for a in models.Hypervisors.query.order_by('IP')]
     if AddClientForm.validate_on_submit():
         if models.Clients.query.filter_by(name=AddClientForm.name.data).first() is None:
             newClient = models.Clients(name=AddClientForm.name.data, date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                         phone=AddClientForm.phone.data, email=AddClientForm.email.data, size=AddClientForm.size.data)
+ 
+            hypervisor = models.Hypervisors.query.filter_by(IP=AddClientForm.hyperv.data).first()
+            newClient.hyperv_id = hypervisor.id
             db.session.add(newClient)
+
             db.session.commit()
             clientKeys = models.Keys(aws=AddClientForm.aws.data, digiocean=AddClientForm.digitalOcean.data, ssh=AddClientForm.ssh.data, client_id=newClient.id)
             db.session.add(clientKeys)
@@ -173,6 +180,7 @@ def client_add():
             return redirect(url_for('client_admin', client_id=newClient.id, new_client=True))
         else:
             error = "Client Name is already in use"
+
     return render_template('addclient.html', title='Add Client', AddClientForm=AddClientForm, error=error)
 
 
@@ -184,7 +192,7 @@ def node_create(client=None, role=None, location=None):
         digiocean   = request.form['digiocean']
         aws         = request.form['aws']
     # This function was tested in python CLI. Seems to work.
-        client = models.Clients.query.filter_by(name=clientName).one()
+        client = models.Clients.query.filter_by(name=clientName).first()
         if location == "aws":
             key = aws
             clientKey = models.Keys.query.filter_by(client_id=client.id).first()
@@ -313,11 +321,16 @@ def check_status(client_id, role="all"):
 
 
 def build_client_local(client, role):
+    if check_status(client.id) is True:
+        return False
+    
+    hypervisorIP = models.Hypervisors.query.get(client.hyperv_id).IP
     lastVid = models.Nodes.query.order_by(models.Nodes.vid.desc()).first()
     if lastVid is None:
         vid = 200
     else:
         vid = lastVid.vid + 1
+
     if (role == "all"):
         lastInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).first()
         if lastInterface is None:
@@ -326,14 +339,13 @@ def build_client_local(client, role):
             inter = str(lastInterface.net)
             interid = re.split('(\d+)', inter)
             inter = "vmbr" + str(int(interid[1]) + 1)
+
     elif (role == "worker"):
-        # Probably going to need to expand more here when EC2 and DigiOcean come into play
         clientInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).filter(models.Nodes.client_id == client.id).first()
         inter = str(clientInterface.net)
-    if check_status(client.id) is True:
-        return False
+
     app.logger.info("Building: " + role + " for newclient " + client.name)
-    arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n seanconnery" + " -i " + inter
+    arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n " + hypervisorIP + " -i " + inter
     subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
     # Due to the nature of the database model, we need to insert basic information about nodes here.
     # They will be updated with ip address upon creation

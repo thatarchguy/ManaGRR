@@ -14,7 +14,6 @@ class Nodes(db.Model):
     type        = db.Column(db.String(20))
     date_added  = db.Column(db.String(20))
     location    = db.Column(db.String(30))
-    hyperv_id   = db.Column(db.Integer, db.ForeignKey('hypervisors.id'))
     IP          = db.Column(db.String(20))
     net         = db.Column(db.String(10))
     vid         = db.Column(db.Integer)
@@ -68,6 +67,7 @@ class Clients(db.Model):
     phone       = db.Column(db.String(20))
     email       = db.Column(db.String(30))
     size        = db.Column(db.String(15))
+    hyperv_id   = db.Column(db.Integer, db.ForeignKey('hypervisors.id'))
     nodes       = db.relationship('Nodes', backref='client',
                                    lazy='dynamic')
     keys        = db.relationship('Keys', backref='client',
