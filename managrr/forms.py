@@ -20,6 +20,7 @@ class AddClient(Form):
     ssh             = StringField(u'sshkey')
     hyperv          = SelectField(u'hyperv')
 
+
 class AddHyper(Form):
     location        = StringField(u'location', validators=[DataRequired()])
     ip              = StringField(u'ip', validators=[DataRequired()])

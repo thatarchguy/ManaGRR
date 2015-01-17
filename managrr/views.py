@@ -5,7 +5,7 @@ import os
 import datetime
 import subprocess
 import re
-import random
+
 
 @app.errorhandler(404)
 def not_found_error(error):
@@ -82,7 +82,7 @@ def client_admin(client_id, new_client=False):
     nodes   = client.nodes.all()
     digikey = models.Keys.query.filter_by(client_id=client_id).first().digiocean
     awskey  = models.Keys.query.filter_by(client_id=client_id).first().aws
-    hypervisorIP    = models.Hypervisors.query.get(client.hyperv_id).IP 
+    hypervisorIP    = models.Hypervisors.query.get(client.hyperv_id).IP
     CreateNodeForm  = CreateNode(digiocean=digikey, aws=awskey)
     if (new_client == None):  # noqa
         new_client = check_status(client.id)
@@ -156,7 +156,7 @@ def client_add():
         if models.Clients.query.filter_by(name=AddClientForm.name.data).first() is None:
             newClient = models.Clients(name=AddClientForm.name.data, date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                         phone=AddClientForm.phone.data, email=AddClientForm.email.data, size=AddClientForm.size.data)
- 
+
             hypervisor = models.Hypervisors.query.filter_by(IP=AddClientForm.hyperv.data).first()
             newClient.hyperv_id = hypervisor.id
             db.session.add(newClient)
@@ -323,7 +323,7 @@ def check_status(client_id, role="all"):
 def build_client_local(client, role):
     if check_status(client.id) is True:
         return False
-    
+
     hypervisorIP = models.Hypervisors.query.get(client.hyperv_id).IP
     lastVid = models.Nodes.query.order_by(models.Nodes.vid.desc()).first()
     if lastVid is None:
