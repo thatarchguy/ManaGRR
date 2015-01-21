@@ -1,8 +1,10 @@
 from flask import render_template, request, flash, redirect, url_for
 from managrr import app, db, models
 from .forms import CreateNode, AddClient, AddHyper
+from dateutil.relativedelta import relativedelta
 import os
 import datetime
+import time
 import subprocess
 import re
 
@@ -104,14 +106,16 @@ def client_delete(client_id):
     keys    = models.Keys.query.filter_by(client_id=client.id).first()
 
     if client.active is False:
-        return redirect(url_for('index.view')) 
+        return redirect(url_for('index.view'))
 
     for node in nodes:
         node.active = False
+        node.date_rm = datetime.datetime.now()
         db.session.add(node)
     client.active = False
+    client.date_rm = datetime.datetime.now()
     db.session.add(client)
-    db.session.delete(keys) 
+    db.session.delete(keys)
     db.session.commit()
 
     return redirect(url_for('index_view'))
@@ -241,8 +245,9 @@ def node_delete(node_id):
     node  = models.Nodes.query.get(node_id)
     if node.active is False:
         return "1"
-    
+
     node.active = False
+    node.date_rm = datetime.datetime.now()
     db.session.add(node)
     db.session.commit()
 
@@ -303,9 +308,34 @@ def client_status(client_id):
 
 @app.route('/api/nodes/history')
 def node_history():
-    # I need to finish the 'add worker' problem before I work on this
     # Query database count all for latest
-    jsondumps = "boilerplate"
+    prevMonth = []
+
+    nodes = models.Nodes.query.all()
+
+    today = datetime.date.today()
+    thisMonth = today.month
+    for x in range(0, 5):
+        prevMonth.append(today - relativedelta(months=x))
+
+    for month in prevMonth:
+        monthFormat = month.strftime("%Y%M")
+        # Make this into a dictionary, {date, amount}
+        for node in nodes:
+            nodeDateAdd = datetime.datetime.strptime(node.date_added, "%Y-%m-%d %H:%M:%S")
+            if node.date_rm is not None:
+                nodeDateRm  = datetime.datetime.strptime(node.date_rm, "%Y-%m-%d %H:%M:%S")
+                nodeRmFormat  = nodeDateRm.strftime("%Y%M")
+            nodeAddFormat = nodeDateAdd.strftime("%Y%M")
+            if nodeAddFormat < monthFormat:
+                if nodeRmFormat > monthFormat or node.date_rm is None:
+                    print "increment something"
+            elif nodeAddFormat == monthFormat:
+                    print "increment something"
+
+    # get date_added, compare it to the month. if it's greater than the month, skip.
+    # if it's less than the month, check the date_rm. If it's greater than the month, add.
+    # repeat for each month.
 
     return jsondumps
 
@@ -351,7 +381,7 @@ def build_client_local(client, role):
 
     app.logger.info("Building: " + role + " for newclient " + client.name)
     arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n " + hypervisorIP + " -i " + inter
-    #subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
+    subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
     # Due to the nature of the database model, we need to insert basic information about nodes here.
     # They will be updated with ip address upon creation
     if (role == "all"):

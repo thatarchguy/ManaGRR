@@ -18,6 +18,8 @@ class Nodes(db.Model):
     net         = db.Column(db.String(10))
     vid         = db.Column(db.Integer)
     active      = db.Column(db.Boolean, unique=False, default=True)
+    date_rm     = db.Column(db.String(20))
+
     def __repr__(self):
         return '<Type %r>' % (self.type)
 
@@ -37,6 +39,9 @@ class Hypervisors(db.Model):
     location    = db.Column(db.String(30))
     IP          = db.Column(db.String(20))
     status      = db.Column(db.Integer)
+
+    def __repr__(self):
+        return '<Type %r>' % (self.type)
 
 
 class Keys(db.Model):
@@ -73,6 +78,7 @@ class Clients(db.Model):
     keys        = db.relationship('Keys', backref='client',
                                    lazy='dynamic')
     active      = db.Column(db.Boolean, unique=False, default=True)
+    date_rm     = db.Column(db.String(20))
 
     def __repr__(self):
         return '<Name %r>' % (self.name)

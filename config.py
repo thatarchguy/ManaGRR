@@ -28,6 +28,7 @@ class BaseConfiguration(object):
     SECRET_KEY = "secret"
     SQLALCHEMY_ECHO = True
 
+
 class TestConfiguration(BaseConfiguration):
 
     TESTING = True
