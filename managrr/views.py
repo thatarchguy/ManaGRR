@@ -24,7 +24,7 @@ def internal_error(error):
 def index_view():
 
     # SQLAlchemy to get total clients
-    clientCount = models.Clients.query.count()
+    clientCount = models.Clients.query.filter_by(active=True).count()
     hyperCount   = models.Hypervisors.query.count()
 
     return render_template('index.html',
@@ -68,7 +68,7 @@ def hypervisor_add():
 def clients_view():
 
     # SQLAlchemy functions here
-    clients = models.Clients.query.all()
+    clients = models.Clients.query.filter_by(active=True).all()
 
     return render_template('clients.html', title="Clients", entries=clients)
 
@@ -78,8 +78,7 @@ def client_admin(client_id, new_client=False):
     new_client = request.args.get('new_client')
     new_worker = request.args.get('new_worker')
     client  = models.Clients.query.get(client_id)
-    client  = models.Clients.query.get(client_id)
-    nodes   = client.nodes.all()
+    nodes   = client.nodes.filter_by(active=True).all()
     digikey = models.Keys.query.filter_by(client_id=client_id).first().digiocean
     awskey  = models.Keys.query.filter_by(client_id=client_id).first().aws
     hypervisorIP    = models.Hypervisors.query.get(client.hyperv_id).IP
@@ -104,13 +103,15 @@ def client_delete(client_id):
     nodes   = models.Nodes.query.filter_by(client_id=client.id)
     keys    = models.Keys.query.filter_by(client_id=client.id).first()
 
-    # Delete nodes...call bash script
-    # Delete from database
+    if client.active is False:
+        return redirect(url_for('index.view')) 
 
-    db.session.delete(keys)
     for node in nodes:
-        db.session.delete(node)
-    db.session.delete(client)
+        node.active = False
+        db.session.add(node)
+    client.active = False
+    db.session.add(client)
+    db.session.delete(keys) 
     db.session.commit()
 
     return redirect(url_for('index_view'))
@@ -238,7 +239,11 @@ def node_delete(node_id):
 
     # Database work
     node  = models.Nodes.query.get(node_id)
-    db.session.delete(node)
+    if node.active is False:
+        return "1"
+    
+    node.active = False
+    db.session.add(node)
     db.session.commit()
 
     return "1"
@@ -325,14 +330,14 @@ def build_client_local(client, role):
         return False
 
     hypervisorIP = models.Hypervisors.query.get(client.hyperv_id).IP
-    lastVid = models.Nodes.query.order_by(models.Nodes.vid.desc()).first()
+    lastVid = models.Nodes.query.order_by(models.Nodes.vid.desc()).filter_by(active=True).first()
     if lastVid is None:
         vid = 200
     else:
         vid = lastVid.vid + 1
 
     if (role == "all"):
-        lastInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).first()
+        lastInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).filter_by(active=True).first()
         if lastInterface is None:
             inter = "vmbr10"
         else:
@@ -346,7 +351,7 @@ def build_client_local(client, role):
 
     app.logger.info("Building: " + role + " for newclient " + client.name)
     arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n " + hypervisorIP + " -i " + inter
-    subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
+    #subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
     # Due to the nature of the database model, we need to insert basic information about nodes here.
     # They will be updated with ip address upon creation
     if (role == "all"):

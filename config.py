@@ -26,7 +26,7 @@ class BaseConfiguration(object):
 
     # Secret key for signing cookies
     SECRET_KEY = "secret"
-
+    SQLALCHEMY_ECHO = True
 
 class TestConfiguration(BaseConfiguration):
 

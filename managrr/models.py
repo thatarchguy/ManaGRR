@@ -17,7 +17,7 @@ class Nodes(db.Model):
     IP          = db.Column(db.String(20))
     net         = db.Column(db.String(10))
     vid         = db.Column(db.Integer)
-
+    active      = db.Column(db.Boolean, unique=False, default=True)
     def __repr__(self):
         return '<Type %r>' % (self.type)
 
@@ -72,6 +72,7 @@ class Clients(db.Model):
                                    lazy='dynamic')
     keys        = db.relationship('Keys', backref='client',
                                    lazy='dynamic')
+    active      = db.Column(db.Boolean, unique=False, default=True)
 
     def __repr__(self):
         return '<Name %r>' % (self.name)
