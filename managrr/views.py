@@ -7,6 +7,7 @@ import datetime
 import time
 import subprocess
 import re
+import json
 
 
 @app.errorhandler(404)
@@ -110,10 +111,10 @@ def client_delete(client_id):
 
     for node in nodes:
         node.active = False
-        node.date_rm = datetime.datetime.now()
+        node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         db.session.add(node)
     client.active = False
-    client.date_rm = datetime.datetime.now()
+    client.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     db.session.add(client)
     db.session.delete(keys)
     db.session.commit()
@@ -247,7 +248,7 @@ def node_delete(node_id):
         return "1"
 
     node.active = False
-    node.date_rm = datetime.datetime.now()
+    node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     db.session.add(node)
     db.session.commit()
 
@@ -308,34 +309,32 @@ def client_status(client_id):
 
 @app.route('/api/nodes/history')
 def node_history():
-    # Query database count all for latest
     prevMonth = []
-
+    results = []
     nodes = models.Nodes.query.all()
 
     today = datetime.date.today()
-    thisMonth = today.month
     for x in range(0, 5):
         prevMonth.append(today - relativedelta(months=x))
-
     for month in prevMonth:
-        monthFormat = month.strftime("%Y%M")
-        # Make this into a dictionary, {date, amount}
+        monthFormat = month.strftime("%Y%m")
+        d = dict()
+        d['month']  = month.strftime("%Y-%m")
+        d['count']  = 0
         for node in nodes:
             nodeDateAdd = datetime.datetime.strptime(node.date_added, "%Y-%m-%d %H:%M:%S")
             if node.date_rm is not None:
                 nodeDateRm  = datetime.datetime.strptime(node.date_rm, "%Y-%m-%d %H:%M:%S")
-                nodeRmFormat  = nodeDateRm.strftime("%Y%M")
-            nodeAddFormat = nodeDateAdd.strftime("%Y%M")
+                nodeRmFormat  = nodeDateRm.strftime("%Y%m")
+            nodeAddFormat = nodeDateAdd.strftime("%Y%m")
             if nodeAddFormat < monthFormat:
                 if nodeRmFormat > monthFormat or node.date_rm is None:
-                    print "increment something"
+                    d['count'] += 1
             elif nodeAddFormat == monthFormat:
-                    print "increment something"
+                    d['count'] += 1
+        results.insert(0, d)
 
-    # get date_added, compare it to the month. if it's greater than the month, skip.
-    # if it's less than the month, check the date_rm. If it's greater than the month, add.
-    # repeat for each month.
+    jsondumps = json.dumps(results, indent=4)
 
     return jsondumps
 
