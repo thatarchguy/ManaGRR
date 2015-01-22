@@ -1,10 +1,13 @@
 from flask import render_template, request, flash, redirect, url_for
 from managrr import app, db, models
 from .forms import CreateNode, AddClient, AddHyper
+from dateutil.relativedelta import relativedelta
 import os
 import datetime
+import time
 import subprocess
 import re
+import json
 
 
 @app.errorhandler(404)
@@ -24,7 +27,7 @@ def internal_error(error):
 def index_view():
 
     # SQLAlchemy to get total clients
-    clientCount = models.Clients.query.count()
+    clientCount = models.Clients.query.filter_by(active=True).count()
     hyperCount   = models.Hypervisors.query.count()
 
     return render_template('index.html',
@@ -68,7 +71,7 @@ def hypervisor_add():
 def clients_view():
 
     # SQLAlchemy functions here
-    clients = models.Clients.query.all()
+    clients = models.Clients.query.filter_by(active=True).all()
 
     return render_template('clients.html', title="Clients", entries=clients)
 
@@ -78,11 +81,11 @@ def client_admin(client_id, new_client=False):
     new_client = request.args.get('new_client')
     new_worker = request.args.get('new_worker')
     client  = models.Clients.query.get(client_id)
-    client  = models.Clients.query.get(client_id)
-    nodes   = client.nodes.all()
+    nodes   = client.nodes.filter_by(active=True).all()
     digikey = models.Keys.query.filter_by(client_id=client_id).first().digiocean
     awskey  = models.Keys.query.filter_by(client_id=client_id).first().aws
-    CreateNodeForm = CreateNode(digiocean=digikey, aws=awskey)
+    hypervisorIP    = models.Hypervisors.query.get(client.hyperv_id).IP
+    CreateNodeForm  = CreateNode(digiocean=digikey, aws=awskey)
     if (new_client == None):  # noqa
         new_client = check_status(client.id)
     if (new_worker == None):  # noqa
@@ -93,7 +96,8 @@ def client_admin(client_id, new_client=False):
                             nodes=nodes,
                             CreateNodeForm=CreateNodeForm,
                             new_client=new_client,
-                            new_worker=new_worker)
+                            new_worker=new_worker,
+                            hypervisorIP=hypervisorIP)
 
 
 @app.route('/client/<int:client_id>/delete/')
@@ -102,13 +106,17 @@ def client_delete(client_id):
     nodes   = models.Nodes.query.filter_by(client_id=client.id)
     keys    = models.Keys.query.filter_by(client_id=client.id).first()
 
-    # Delete nodes...call bash script
-    # Delete from database
+    if client.active is False:
+        return redirect(url_for('index.view'))
 
-    db.session.delete(keys)
     for node in nodes:
-        db.session.delete(node)
-    db.session.delete(client)
+        node.active = False
+        node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        db.session.add(node)
+    client.active = False
+    client.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    db.session.add(client)
+    db.session.delete(keys)
     db.session.commit()
 
     return redirect(url_for('index_view'))
@@ -149,11 +157,16 @@ def client_edit(client_id):
 def client_add():
     error = None
     AddClientForm = AddClient()
+    AddClientForm.hyperv.choices = [(a.IP, a.IP) for a in models.Hypervisors.query.order_by('IP')]
     if AddClientForm.validate_on_submit():
         if models.Clients.query.filter_by(name=AddClientForm.name.data).first() is None:
             newClient = models.Clients(name=AddClientForm.name.data, date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                         phone=AddClientForm.phone.data, email=AddClientForm.email.data, size=AddClientForm.size.data)
+
+            hypervisor = models.Hypervisors.query.filter_by(IP=AddClientForm.hyperv.data).first()
+            newClient.hyperv_id = hypervisor.id
             db.session.add(newClient)
+
             db.session.commit()
             clientKeys = models.Keys(aws=AddClientForm.aws.data, digiocean=AddClientForm.digitalOcean.data, ssh=AddClientForm.ssh.data, client_id=newClient.id)
             db.session.add(clientKeys)
@@ -173,6 +186,7 @@ def client_add():
             return redirect(url_for('client_admin', client_id=newClient.id, new_client=True))
         else:
             error = "Client Name is already in use"
+
     return render_template('addclient.html', title='Add Client', AddClientForm=AddClientForm, error=error)
 
 
@@ -184,7 +198,7 @@ def node_create(client=None, role=None, location=None):
         digiocean   = request.form['digiocean']
         aws         = request.form['aws']
     # This function was tested in python CLI. Seems to work.
-        client = models.Clients.query.filter_by(name=clientName).one()
+        client = models.Clients.query.filter_by(name=clientName).first()
         if location == "aws":
             key = aws
             clientKey = models.Keys.query.filter_by(client_id=client.id).first()
@@ -230,7 +244,12 @@ def node_delete(node_id):
 
     # Database work
     node  = models.Nodes.query.get(node_id)
-    db.session.delete(node)
+    if node.active is False:
+        return "1"
+
+    node.active = False
+    node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    db.session.add(node)
     db.session.commit()
 
     return "1"
@@ -290,9 +309,32 @@ def client_status(client_id):
 
 @app.route('/api/nodes/history')
 def node_history():
-    # I need to finish the 'add worker' problem before I work on this
-    # Query database count all for latest
-    jsondumps = "boilerplate"
+    prevMonth = []
+    results = []
+    nodes = models.Nodes.query.all()
+
+    today = datetime.date.today()
+    for x in range(0, 5):
+        prevMonth.append(today - relativedelta(months=x))
+    for month in prevMonth:
+        monthFormat = month.strftime("%Y%m")
+        d = dict()
+        d['month']  = month.strftime("%Y-%m")
+        d['count']  = 0
+        for node in nodes:
+            nodeDateAdd = datetime.datetime.strptime(node.date_added, "%Y-%m-%d %H:%M:%S")
+            if node.date_rm is not None:
+                nodeDateRm  = datetime.datetime.strptime(node.date_rm, "%Y-%m-%d %H:%M:%S")
+                nodeRmFormat  = nodeDateRm.strftime("%Y%m")
+            nodeAddFormat = nodeDateAdd.strftime("%Y%m")
+            if nodeAddFormat < monthFormat:
+                if nodeRmFormat > monthFormat or node.date_rm is None:
+                    d['count'] += 1
+            elif nodeAddFormat == monthFormat:
+                    d['count'] += 1
+        results.insert(0, d)
+
+    jsondumps = json.dumps(results, indent=4)
 
     return jsondumps
 
@@ -313,27 +355,31 @@ def check_status(client_id, role="all"):
 
 
 def build_client_local(client, role):
-    lastVid = models.Nodes.query.order_by(models.Nodes.vid.desc()).first()
+    if check_status(client.id) is True:
+        return False
+
+    hypervisorIP = models.Hypervisors.query.get(client.hyperv_id).IP
+    lastVid = models.Nodes.query.order_by(models.Nodes.vid.desc()).filter_by(active=True).first()
     if lastVid is None:
         vid = 200
     else:
         vid = lastVid.vid + 1
+
     if (role == "all"):
-        lastInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).first()
+        lastInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).filter_by(active=True).first()
         if lastInterface is None:
             inter = "vmbr10"
         else:
             inter = str(lastInterface.net)
             interid = re.split('(\d+)', inter)
             inter = "vmbr" + str(int(interid[1]) + 1)
+
     elif (role == "worker"):
-        # Probably going to need to expand more here when EC2 and DigiOcean come into play
         clientInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).filter(models.Nodes.client_id == client.id).first()
         inter = str(clientInterface.net)
-    if check_status(client.id) is True:
-        return False
+
     app.logger.info("Building: " + role + " for newclient " + client.name)
-    arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n seanconnery" + " -i " + inter
+    arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n " + hypervisorIP + " -i " + inter
     subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
     # Due to the nature of the database model, we need to insert basic information about nodes here.
     # They will be updated with ip address upon creation

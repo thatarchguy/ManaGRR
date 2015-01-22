@@ -70,25 +70,8 @@
     <div class="col-lg-8">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <i class="fa fa-bar-chart-o fa-fw"></i> Node Count
+                <i class="fa fa-bar-chart-o fa-fw"></i> Node Count Monthly
                 <div class="pull-right">
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
-                            Actions
-                            <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu pull-right" role="menu">
-                            <li><a href="#">Action</a>
-                            </li>
-                            <li><a href="#">Another action</a>
-                            </li>
-                            <li><a href="#">Something else here</a>
-                            </li>
-                            <li class="divider"></li>
-                            <li><a href="#">Separated link</a>
-                            </li>
-                        </ul>
-                    </div>
                 </div>
             </div>
             <!-- /.panel-heading -->
@@ -112,36 +95,36 @@
       element: 'node-line-chart',
       // Chart data records -- each entry in this array corresponds to a point on
       // the chart.
-    /*  data: [
+      /* data: [
         { year: '2008', value: 20 },
         { year: '2009', value: 10 },
         { year: '2010', value: 5 },
         { year: '2011', value: 5 },
         { year: '2012', value: 20 }
       ], 
-    */
+      */ 
       // The name of the data record attribute that contains x-values.
-      xkey: 'year',
+      xkey: 'month',
       // A list of names of data record attributes that contain y-values.
-      ykeys: ['value'],
+      ykeys: ['count'],
       // Labels for the ykeys -- will be displayed when you hover over the
       // chart.
-      labels: ['Value']
+      labels: 'N'
     });
 
     $.ajax({
       type: "GET",
       dataType: 'json',
-      url: "./nodes/count", // This is the URL to the API
-      data: { days: 7 } // Passing a parameter to the API to specify number of days
+      url: "./api/nodes/history", // This is the URL to the API
+      //data: { days: 7 } // Passing a parameter to the API to specify number of days
     })
     .done(function( data ) {
-      // When the response to the AJAX request comes back render the chart with new data
+     // When the response to the AJAX request comes back render the chart with new data
       nodeLine.setData(data);
     })
     .fail(function() {
       // If there is no communication between the server, show an error
-      // alert( "error occured" );
+       alert( "error occured" );
     });
 
 

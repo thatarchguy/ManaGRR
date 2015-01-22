@@ -18,6 +18,7 @@ class AddClient(Form):
     digitalOcean    = StringField(u'DOkey')
     aws             = StringField(u'awskey')
     ssh             = StringField(u'sshkey')
+    hyperv          = SelectField(u'hyperv')
 
 
 class AddHyper(Form):
