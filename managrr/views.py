@@ -1,10 +1,13 @@
 from flask import render_template, request, flash, redirect, url_for
 from managrr import app, db, models
 from .forms import CreateNode, AddClient, AddHyper
+from dateutil.relativedelta import relativedelta
 import os
 import datetime
+import time
 import subprocess
 import re
+import json
 
 
 @app.errorhandler(404)
@@ -24,7 +27,7 @@ def internal_error(error):
 def index_view():
 
     # SQLAlchemy to get total clients
-    clientCount = models.Clients.query.count()
+    clientCount = models.Clients.query.filter_by(active=True).count()
     hyperCount   = models.Hypervisors.query.count()
 
     return render_template('index.html',
@@ -68,7 +71,7 @@ def hypervisor_add():
 def clients_view():
 
     # SQLAlchemy functions here
-    clients = models.Clients.query.all()
+    clients = models.Clients.query.filter_by(active=True).all()
 
     return render_template('clients.html', title="Clients", entries=clients)
 
@@ -78,8 +81,7 @@ def client_admin(client_id, new_client=False):
     new_client = request.args.get('new_client')
     new_worker = request.args.get('new_worker')
     client  = models.Clients.query.get(client_id)
-    client  = models.Clients.query.get(client_id)
-    nodes   = client.nodes.all()
+    nodes   = client.nodes.filter_by(active=True).all()
     digikey = models.Keys.query.filter_by(client_id=client_id).first().digiocean
     awskey  = models.Keys.query.filter_by(client_id=client_id).first().aws
     hypervisorIP    = models.Hypervisors.query.get(client.hyperv_id).IP
@@ -104,13 +106,17 @@ def client_delete(client_id):
     nodes   = models.Nodes.query.filter_by(client_id=client.id)
     keys    = models.Keys.query.filter_by(client_id=client.id).first()
 
-    # Delete nodes...call bash script
-    # Delete from database
+    if client.active is False:
+        return redirect(url_for('index.view'))
 
-    db.session.delete(keys)
     for node in nodes:
-        db.session.delete(node)
-    db.session.delete(client)
+        node.active = False
+        node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        db.session.add(node)
+    client.active = False
+    client.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    db.session.add(client)
+    db.session.delete(keys)
     db.session.commit()
 
     return redirect(url_for('index_view'))
@@ -238,7 +244,12 @@ def node_delete(node_id):
 
     # Database work
     node  = models.Nodes.query.get(node_id)
-    db.session.delete(node)
+    if node.active is False:
+        return "1"
+
+    node.active = False
+    node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    db.session.add(node)
     db.session.commit()
 
     return "1"
@@ -298,9 +309,32 @@ def client_status(client_id):
 
 @app.route('/api/nodes/history')
 def node_history():
-    # I need to finish the 'add worker' problem before I work on this
-    # Query database count all for latest
-    jsondumps = "boilerplate"
+    prevMonth = []
+    results = []
+    nodes = models.Nodes.query.all()
+
+    today = datetime.date.today()
+    for x in range(0, 5):
+        prevMonth.append(today - relativedelta(months=x))
+    for month in prevMonth:
+        monthFormat = month.strftime("%Y%m")
+        d = dict()
+        d['month']  = month.strftime("%Y-%m")
+        d['count']  = 0
+        for node in nodes:
+            nodeDateAdd = datetime.datetime.strptime(node.date_added, "%Y-%m-%d %H:%M:%S")
+            if node.date_rm is not None:
+                nodeDateRm  = datetime.datetime.strptime(node.date_rm, "%Y-%m-%d %H:%M:%S")
+                nodeRmFormat  = nodeDateRm.strftime("%Y%m")
+            nodeAddFormat = nodeDateAdd.strftime("%Y%m")
+            if nodeAddFormat < monthFormat:
+                if nodeRmFormat > monthFormat or node.date_rm is None:
+                    d['count'] += 1
+            elif nodeAddFormat == monthFormat:
+                    d['count'] += 1
+        results.insert(0, d)
+
+    jsondumps = json.dumps(results, indent=4)
 
     return jsondumps
 
@@ -325,14 +359,14 @@ def build_client_local(client, role):
         return False
 
     hypervisorIP = models.Hypervisors.query.get(client.hyperv_id).IP
-    lastVid = models.Nodes.query.order_by(models.Nodes.vid.desc()).first()
+    lastVid = models.Nodes.query.order_by(models.Nodes.vid.desc()).filter_by(active=True).first()
     if lastVid is None:
         vid = 200
     else:
         vid = lastVid.vid + 1
 
     if (role == "all"):
-        lastInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).first()
+        lastInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).filter_by(active=True).first()
         if lastInterface is None:
             inter = "vmbr10"
         else:
