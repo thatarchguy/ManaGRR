@@ -9,39 +9,48 @@
 
 function worker {
 DRIVE=ubuntu14-worker
-ssh root@proxmox.lan bash -c "'
-pvesh create /nodes/$NODE/qemu -vmid $VID -name $CLIENT-worker -memory 2048 -sockets 1 -cores 4 -net0 e1000,bridge=$INTERFACE -net1 e1000,bridge=vmbr1 -virtio0=virt:$VID/ubuntu14-worker.qcow2'"
+HOSTNAME=$(ssh root@$NODE bash -c "'
+cat /etc/hostname'")
+
+ssh root@$NODE bash -c "'
+pvesh create /nodes/$HOSTNAME/qemu -vmid $VID -name $CLIENT-worker -memory 2048 -sockets 1 -cores 4 -net0 e1000,bridge=$INTERFACE -net1 e1000,bridge=vmbr1 -virtio0=virt:$VID/ubuntu14-worker.qcow2'"
 
 mkdir /mnt/virt/images/$VID
 mv ubuntu_qemu/$DRIVE.qcow2 /mnt/virt/images/$VID/
 
-ssh root@proxmox.lan bash -c "'pvesh create /nodes/$NODE/qemu/$VID/status/start'"
+ssh root@$NODE bash -c "'pvesh create /nodes/$HOSTNAME/qemu/$VID/status/start'"
 }
 
 function DB {
 DRIVE=ubuntu14-DB
-ssh root@proxmox.lan bash -c "'
-pvesh create /nodes/$NODE/qemu -vmid $VID -name $CLIENT-DB -memory 2048 -sockets 2 -cores 4 -net0 e1000,bridge=$INTERFACE -net1 e1000,bridge=vmbr1 -virtio0=virt:$VID/ubuntu14-DB.qcow2'"
+HOSTNAME=$(ssh root@$NODE bash -c "'
+cat /etc/hostname'")
+
+ssh root@$NODE bash -c "'
+pvesh create /nodes/$HOSTNAME/qemu -vmid $VID -name $CLIENT-DB -memory 2048 -sockets 2 -cores 4 -net0 e1000,bridge=$INTERFACE -net1 e1000,bridge=vmbr1 -virtio0=virt:$VID/ubuntu14-DB.qcow2'"
 
 mkdir /mnt/virt/images/$VID
 mv ubuntu_qemu/$DRIVE.qcow2 /mnt/virt/images/$VID/
 
-ssh root@proxmox.lan bash -c "'pvesh create /nodes/$NODE/qemu/$VID/status/start'"
+ssh root@$NODE bash -c "'pvesh create /nodes/$HOSTNAME/qemu/$VID/status/start'"
 }
 
 function control {
 DRIVE=ubuntu14-control
-ssh root@proxmox.lan bash -c "'
-pvesh create /nodes/$NODE/qemu -vmid $VID -name $CLIENT-control -memory 2048 -sockets 1 -cores 4 -net0 e1000,bridge=vmbr0 -net1 e1000,bridge=$INTERFACE -virtio0=virt:$VID/ubuntu14-control.qcow2'"
+HOSTNAME=$(ssh root@$NODE bash -c "'
+cat /etc/hostname'")
+
+ssh root@$NODE bash -c "'
+pvesh create /nodes/$HOSTNAME/qemu -vmid $VID -name $CLIENT-control -memory 2048 -sockets 1 -cores 4 -net0 e1000,bridge=vmbr0 -net1 e1000,bridge=$INTERFACE -virtio0=virt:$VID/ubuntu14-control.qcow2'"
 
 mkdir /mnt/virt/images/$VID
 mv ubuntu_qemu/$DRIVE.qcow2 /mnt/virt/images/$VID/
 
-ssh root@proxmox.lan bash -c "'pvesh create /nodes/$NODE/qemu/$VID/status/start'"
+ssh root@$NODE bash -c "'pvesh create /nodes/$HOSTNAME/qemu/$VID/status/start'"
 }
 
 function newint {
-ssh root@proxmox.lan bash -c "'echo \"auto $INTERFACE  
+ssh root@$NODE bash -c "'echo \"auto $INTERFACE  
 iface $INTERFACE inet manual 
    bridge_ports none 
    bridge_stp off 

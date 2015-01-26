@@ -18,7 +18,7 @@ OPTIONS:
 
 If "-r all" is chosen, then the VID will increment by 1 for each machine
 
-ex. proxmox.sh -c newclient -b 13 -v 200 -r all -n node1 -i vmbr200
+ex. wrapper.sh -c newclient -b 13 -v 200 -r all -n node1 -i vmbr200
 
 EOF
 }
