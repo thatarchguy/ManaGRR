@@ -8,6 +8,7 @@ import time
 import subprocess
 import re
 import json
+import socket
 
 
 @app.errorhandler(404)
@@ -46,6 +47,9 @@ def hypervisors_view():
 
     # SQLAlchemy functions here
     hypervisors = models.Hypervisors.query.all()
+    #for hypervisor in hypervisors:
+    #    check_hypervisor(hypervisor)
+
 
     return render_template('hypervisors.html', title="Hypervisors", entries=hypervisors)
 
@@ -116,7 +120,6 @@ def client_delete(client_id):
             node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             db.session.add(node)
             arguments = "-v " + str(node.vid) + " -r " + node.type + " -n " + hypervisorIP + " -i " + node.net
-            print arguments
             subprocess.Popen(["bash delete.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
 
     client.active = False
@@ -124,7 +127,7 @@ def client_delete(client_id):
     db.session.add(client)
     db.session.delete(keys)
     db.session.commit()
-    app.logger.info("Deleted client: " + client.name) 
+    app.logger.info("Deleted client: " + client.name)
 
     return redirect(url_for('index_view'))
 
@@ -258,7 +261,6 @@ def node_delete(node_id):
     node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     db.session.add(node)
     arguments = "-v " + str(node.vid) + " -r " + node.type + " -n " + hypervisorIP + " -i " + node.net
-    print arguments
     subprocess.Popen(["bash delete.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
     db.session.commit()
     app.logger.info("Deleted node: " + str(node.id) + " " + node.type)
@@ -395,8 +397,8 @@ def build_client_local(client, role):
     # They will be updated with ip address upon creation
     if (role == "all"):
         addDatabase = models.Nodes(client_id=client.id, type="database", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
-        addWorker   = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid+1)
-        addControl  = models.Nodes(client_id=client.id, type="control", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid+2)
+        addWorker   = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid + 1)
+        addControl  = models.Nodes(client_id=client.id, type="control", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid + 2)
         db.session.add(addDatabase)
         db.session.add(addWorker)
         db.session.add(addControl)
@@ -416,4 +418,18 @@ def build_client_digiocean(client, key):
 def build_client_aws(client, key):
     app.logger.info("build_client_aws " + str(client.id) + key)
 
+    return True
+
+def check_hypervisor(hypervisor):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect((hypervisor.IP, 8006))
+        print "Port 8006 reachable"
+        hypervisor.status = 1
+        db.session.commit()
+    except socket.error as e:
+        print "Error on connect: %s" % e
+        hypervisor.status = 0
+        db.session.commit()
+    s.close()
     return True
