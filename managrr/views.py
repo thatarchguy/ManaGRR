@@ -50,7 +50,6 @@ def hypervisors_view():
     #for hypervisor in hypervisors:
     #    check_hypervisor(hypervisor)
 
-
     return render_template('hypervisors.html', title="Hypervisors", entries=hypervisors)
 
 
@@ -419,6 +418,7 @@ def build_client_aws(client, key):
     app.logger.info("build_client_aws " + str(client.id) + key)
 
     return True
+
 
 def check_hypervisor(hypervisor):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

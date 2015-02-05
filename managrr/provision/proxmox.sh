@@ -66,7 +66,8 @@ usage()
 cat << EOF
 usage: $0 options
 
-Sysprep images to prepare for upload to virt server
+Transfer sysprepped images to proxmox server.
+Mount the server storage to this machine, in this case, /mnt/virt
 
 OPTIONS:
    -h      Show this message
