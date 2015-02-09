@@ -47,8 +47,6 @@ def hypervisors_view():
 
     # SQLAlchemy functions here
     hypervisors = models.Hypervisors.query.all()
-    #for hypervisor in hypervisors:
-    #    check_hypervisor(hypervisor)
 
     return render_template('hypervisors.html', title="Hypervisors", entries=hypervisors)
 
@@ -62,7 +60,7 @@ def hypervisor_add():
             newHypervisor = models.Hypervisors(location=AddHyperForm.location.data, IP=AddHyperForm.ip.data)
             db.session.add(newHypervisor)
             db.session.commit()
-
+            hypervisor_check(newHypervisor.id)
             return redirect('/hypervisors')
         else:
             error = "Client IP is already in use"
@@ -70,13 +68,32 @@ def hypervisor_add():
     return render_template('addhyper.html', title="Add Hypervisor", AddHyperForm=AddHyperForm, error=error)
 
 
+@app.route('/hypervisor/<int:hyperid>/check')
+def hypervisor_check(hyperid):
+    hypervisor = models.Hypervisors.query.get(hyperid)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect((hypervisor.IP, 8006))
+        print "Port 8006 reachable"
+        hypervisor.status = 1
+        db.session.commit()
+    except socket.error as e:
+        print "Error on connect: %s" % e
+        hypervisor.status = 0
+        db.session.commit()
+    s.close()
+
+    return redirect(url_for('hypervisors_view'))
+
+
 @app.route('/clients')
 def clients_view():
 
     # SQLAlchemy functions here
     clients = models.Clients.query.filter_by(active=True).all()
+    hyperCount   = models.Hypervisors.query.count()
 
-    return render_template('clients.html', title="Clients", entries=clients)
+    return render_template('clients.html', title="Clients", entries=clients, hyperCount=hyperCount)
 
 
 @app.route('/client/<int:client_id>/admin/')
@@ -417,19 +434,4 @@ def build_client_digiocean(client, key):
 def build_client_aws(client, key):
     app.logger.info("build_client_aws " + str(client.id) + key)
 
-    return True
-
-
-def check_hypervisor(hypervisor):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        s.connect((hypervisor.IP, 8006))
-        print "Port 8006 reachable"
-        hypervisor.status = 1
-        db.session.commit()
-    except socket.error as e:
-        print "Error on connect: %s" % e
-        hypervisor.status = 0
-        db.session.commit()
-    s.close()
     return True

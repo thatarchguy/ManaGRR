@@ -28,7 +28,10 @@
             <th></th>
         </tr>
     </thead>
-    <tbody>    
+    <tbody>
+    {% if hyperCount == 0 %}
+       <tr><span style="color:red">Please add a hypervisor before adding a client</span></tr>    
+    {% else %}
     {% for entry in entries %}
         <tr>
             <td>{{ entry.name }} </td>
@@ -37,7 +40,7 @@
             <td><a class="btn" href="client/{{ entry.id }}/admin/">Admin</a>
         </tr>
      {% endfor %}
-        
+    {% endif %}
     </tbody>
 </table>
 

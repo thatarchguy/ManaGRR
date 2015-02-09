@@ -1,4 +1,4 @@
-
+*.lockfile
 wordlists/
 *.pyc
 app.db
