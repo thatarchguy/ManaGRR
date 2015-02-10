@@ -22,24 +22,25 @@
 <table class="table table-hover">
     <thead>
         <tr>
-            <th>#</th>
             <th>Client</th>
             <th>Date Added</th>
             <th>Nodes Connected</th>
             <th></th>
         </tr>
     </thead>
-    <tbody>    
+    <tbody>
+    {% if hyperCount == 0 %}
+       <tr><span style="color:red">Please add a hypervisor before adding a client</span></tr>    
+    {% else %}
     {% for entry in entries %}
         <tr>
-            <td>{{ entry.id }} </td>
             <td>{{ entry.name }} </td>
             <td>{{ entry.date_added }} </td>
             <td>{{ entry.nodes.count() }}</td>
             <td><a class="btn" href="client/{{ entry.id }}/admin/">Admin</a>
         </tr>
      {% endfor %}
-        
+    {% endif %}
     </tbody>
 </table>
 

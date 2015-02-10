@@ -8,6 +8,7 @@ import time
 import subprocess
 import re
 import json
+import socket
 
 
 @app.errorhandler(404)
@@ -59,7 +60,7 @@ def hypervisor_add():
             newHypervisor = models.Hypervisors(location=AddHyperForm.location.data, IP=AddHyperForm.ip.data)
             db.session.add(newHypervisor)
             db.session.commit()
-
+            hypervisor_check(newHypervisor.id)
             return redirect('/hypervisors')
         else:
             error = "Client IP is already in use"
@@ -67,13 +68,32 @@ def hypervisor_add():
     return render_template('addhyper.html', title="Add Hypervisor", AddHyperForm=AddHyperForm, error=error)
 
 
+@app.route('/hypervisor/<int:hyperid>/check')
+def hypervisor_check(hyperid):
+    hypervisor = models.Hypervisors.query.get(hyperid)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect((hypervisor.IP, 8006))
+        print "Port 8006 reachable"
+        hypervisor.status = 1
+        db.session.commit()
+    except socket.error as e:
+        print "Error on connect: %s" % e
+        hypervisor.status = 0
+        db.session.commit()
+    s.close()
+
+    return redirect(url_for('hypervisors_view'))
+
+
 @app.route('/clients')
 def clients_view():
 
     # SQLAlchemy functions here
     clients = models.Clients.query.filter_by(active=True).all()
+    hyperCount   = models.Hypervisors.query.count()
 
-    return render_template('clients.html', title="Clients", entries=clients)
+    return render_template('clients.html', title="Clients", entries=clients, hyperCount=hyperCount)
 
 
 @app.route('/client/<int:client_id>/admin/')
@@ -105,19 +125,25 @@ def client_delete(client_id):
     client  = models.Clients.query.get(client_id)
     nodes   = models.Nodes.query.filter_by(client_id=client.id)
     keys    = models.Keys.query.filter_by(client_id=client.id).first()
+    hypervisorIP    = models.Hypervisors.query.get(client.hyperv_id).IP
 
     if client.active is False:
         return redirect(url_for('index.view'))
 
     for node in nodes:
-        node.active = False
-        node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        db.session.add(node)
+        if node.active is not False:
+            node.active = False
+            node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            db.session.add(node)
+            arguments = "-v " + str(node.vid) + " -r " + node.type + " -n " + hypervisorIP + " -i " + node.net
+            subprocess.Popen(["bash delete.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
+
     client.active = False
     client.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     db.session.add(client)
     db.session.delete(keys)
     db.session.commit()
+    app.logger.info("Deleted client: " + client.name)
 
     return redirect(url_for('index_view'))
 
@@ -240,18 +266,20 @@ def node_create(client=None, role=None, location=None):
 @app.route('/api/nodes/delete/<int:node_id>')
 def node_delete(node_id):
 
-    # Bash scripts to delete node
-
-    # Database work
     node  = models.Nodes.query.get(node_id)
     if node.active is False:
         return "1"
 
+    client  = models.Clients.query.get(node.client_id)
+    hypervisorIP    = models.Hypervisors.query.get(client.hyperv_id).IP
+
     node.active = False
     node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     db.session.add(node)
+    arguments = "-v " + str(node.vid) + " -r " + node.type + " -n " + hypervisorIP + " -i " + node.net
+    subprocess.Popen(["bash delete.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
     db.session.commit()
-
+    app.logger.info("Deleted node: " + str(node.id) + " " + node.type)
     return "1"
 
 
@@ -384,11 +412,11 @@ def build_client_local(client, role):
     # Due to the nature of the database model, we need to insert basic information about nodes here.
     # They will be updated with ip address upon creation
     if (role == "all"):
-        addWorker   = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
         addDatabase = models.Nodes(client_id=client.id, type="database", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
-        addControl  = models.Nodes(client_id=client.id, type="control", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
-        db.session.add(addWorker)
+        addWorker   = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid + 1)
+        addControl  = models.Nodes(client_id=client.id, type="control", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid + 2)
         db.session.add(addDatabase)
+        db.session.add(addWorker)
         db.session.add(addControl)
         db.session.commit()
     elif (role == "worker"):

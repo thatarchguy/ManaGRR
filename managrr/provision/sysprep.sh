@@ -3,51 +3,51 @@
 
 function worker {
 echo "[+] Creating Worker"
-cp ubuntu_qemu/qemu-ubuntu14-base.qcow2 ubuntu_qemu/ubuntu14-worker.qcow2
+cp ubuntu_qemu/qemu-ubuntu14-base.qcow2 ubuntu_qemu/ubuntu14-$CLIENT-worker.qcow2
 echo "[+] Sysprepping"
-virt-sysprep -a ubuntu_qemu/ubuntu14-worker.qcow2
+virt-sysprep -a ubuntu_qemu/ubuntu14-$CLIENT-worker.qcow2
 
-virt-copy-in -a ubuntu_qemu/ubuntu14-worker.qcow2 configure.sh /
+virt-copy-in -a ubuntu_qemu/ubuntu14-$CLIENT-worker.qcow2 configure.sh /
 
 virt-sysprep --enable customize \
     --root-password password:s3cur3password \
     --firstboot ./configure.sh \
-    --hostname $HOST-worker \
-    -a ubuntu_qemu/ubuntu14-worker.qcow2
+    --hostname $CLIENT-worker \
+    -a ubuntu_qemu/ubuntu14-$CLIENT-worker.qcow2
 }
 
 function DB {
 echo "[+] Creating DB"
 echo "[+] Sysprepping"
 
-cp ubuntu_qemu/qemu-ubuntu14-base.qcow2 ubuntu_qemu/ubuntu14-DB.qcow2
+cp ubuntu_qemu/qemu-ubuntu14-base.qcow2 ubuntu_qemu/ubuntu14-$CLIENT-db.qcow2
 
-virt-sysprep -a ubuntu_qemu/ubuntu14-DB.qcow2
+virt-sysprep -a ubuntu_qemu/ubuntu14-$CLIENT-db.qcow2
 
-virt-copy-in -a ubuntu_qemu/ubuntu14-DB.qcow2 configure.sh /
+virt-copy-in -a ubuntu_qemu/ubuntu14-$CLIENT-db.qcow2 configure.sh /
 
 virt-sysprep --enable customize \
     --root-password password:s3cur3password \
     --firstboot ./configure.sh \
-    --hostname $HOST-DB \
-    -a ubuntu_qemu/ubuntu14-DB.qcow2
+    --hostname $CLIENT-DB \
+    -a ubuntu_qemu/ubuntu14-$CLIENT-db.qcow2
 }
 
 function control {
 echo "[+] Creating Control"
 echo "[+] Sysprepping"
 
-cp ubuntu_qemu/qemu-ubuntu14-base.qcow2 ubuntu_qemu/ubuntu14-control.qcow2
+cp ubuntu_qemu/qemu-ubuntu14-base.qcow2 ubuntu_qemu/ubuntu14-$CLIENT-control.qcow2
 
-virt-sysprep -a ubuntu_qemu/ubuntu14-control.qcow2
+virt-sysprep -a ubuntu_qemu/ubuntu14-$CLIENT-control.qcow2
 
-virt-copy-in -a ubuntu_qemu/ubuntu14-control.qcow2 configure.sh /
+virt-copy-in -a ubuntu_qemu/ubuntu14-$CLIENT-control.qcow2 configure.sh /
 
 virt-sysprep --enable customize \
     --root-password password:s3cur3password \
     --firstboot ./configure.sh \
-    --hostname $HOST-control \
-    -a ubuntu_qemu/ubuntu14-control.qcow2
+    --hostname $CLIENT-control \
+    -a ubuntu_qemu/ubuntu14-$CLIENT-control.qcow2
 }
 
 usage()
@@ -65,7 +65,7 @@ ex. sysprep.sh -c newclient -r all
 EOF
 }
 
-HOST=
+CLIENT=
 ROLE=
 while getopts “hc:r:” OPTION
 do
@@ -75,7 +75,7 @@ do
              exit 1
              ;;
          c)
-             HOST=$OPTARG
+             CLIENT=$OPTARG
              ;;
          r)
              ROLE=$OPTARG
@@ -87,7 +87,7 @@ do
      esac
 done
 
-if [[ -z $HOST ]] || [[ -z $ROLE ]]
+if [[ -z $CLIENT ]] || [[ -z $ROLE ]]
 then
      usage
      exit 1
