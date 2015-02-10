@@ -8,12 +8,12 @@
 
 
 function worker {
-DRIVE=ubuntu14-worker
+DRIVE=ubuntu14-$CLIENT-worker
 HOSTNAME=$(ssh root@$NODE bash -c "'
 cat /etc/hostname'")
 
 ssh root@$NODE bash -c "'
-pvesh create /nodes/$HOSTNAME/qemu -vmid $VID -name $CLIENT-worker -memory 2048 -sockets 1 -cores 4 -net0 e1000,bridge=$INTERFACE -net1 e1000,bridge=vmbr1 -virtio0=virt:$VID/ubuntu14-worker.qcow2'"
+pvesh create /nodes/$HOSTNAME/qemu -vmid $VID -name $CLIENT-worker -memory 2048 -sockets 1 -cores 4 -net0 e1000,bridge=$INTERFACE -net1 e1000,bridge=vmbr1 -virtio0=virt:$VID/ubuntu14-$CLIENT-worker.qcow2'"
 
 mkdir /mnt/virt/images/$VID
 mv ubuntu_qemu/$DRIVE.qcow2 /mnt/virt/images/$VID/
@@ -22,12 +22,12 @@ ssh root@$NODE bash -c "'pvesh create /nodes/$HOSTNAME/qemu/$VID/status/start'"
 }
 
 function DB {
-DRIVE=ubuntu14-DB
+DRIVE=ubuntu14-$CLIENT-db
 HOSTNAME=$(ssh root@$NODE bash -c "'
 cat /etc/hostname'")
 
 ssh root@$NODE bash -c "'
-pvesh create /nodes/$HOSTNAME/qemu -vmid $VID -name $CLIENT-DB -memory 2048 -sockets 2 -cores 4 -net0 e1000,bridge=$INTERFACE -net1 e1000,bridge=vmbr1 -virtio0=virt:$VID/ubuntu14-DB.qcow2'"
+pvesh create /nodes/$HOSTNAME/qemu -vmid $VID -name $CLIENT-DB -memory 2048 -sockets 2 -cores 4 -net0 e1000,bridge=$INTERFACE -net1 e1000,bridge=vmbr1 -virtio0=virt:$VID/ubuntu14-$CLIENT-db.qcow2'"
 
 mkdir /mnt/virt/images/$VID
 mv ubuntu_qemu/$DRIVE.qcow2 /mnt/virt/images/$VID/
@@ -36,12 +36,12 @@ ssh root@$NODE bash -c "'pvesh create /nodes/$HOSTNAME/qemu/$VID/status/start'"
 }
 
 function control {
-DRIVE=ubuntu14-control
+DRIVE=ubuntu14-$CLIENT-control
 HOSTNAME=$(ssh root@$NODE bash -c "'
 cat /etc/hostname'")
 
 ssh root@$NODE bash -c "'
-pvesh create /nodes/$HOSTNAME/qemu -vmid $VID -name $CLIENT-control -memory 2048 -sockets 1 -cores 4 -net0 e1000,bridge=vmbr0 -net1 e1000,bridge=$INTERFACE -virtio0=virt:$VID/ubuntu14-control.qcow2'"
+pvesh create /nodes/$HOSTNAME/qemu -vmid $VID -name $CLIENT-control -memory 2048 -sockets 1 -cores 4 -net0 e1000,bridge=vmbr0 -net1 e1000,bridge=$INTERFACE -virtio0=virt:$VID/ubuntu14-$CLIENT-control.qcow2'"
 
 mkdir /mnt/virt/images/$VID
 mv ubuntu_qemu/$DRIVE.qcow2 /mnt/virt/images/$VID/

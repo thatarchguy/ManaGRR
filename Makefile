@@ -20,6 +20,8 @@ clean:
 	find . -name '*.pyo' -exec rm -f {} \;
 	find . -name '*~' -exec rm -f {} \;
 	find . -name '__pycache__' -exec rmdir {} \;
+	rm -f app.db
+	rm -rf db_repository
 	rm -f managrr.log
 
 lint:
@@ -28,3 +30,6 @@ lint:
 test:
 	python setup.py test
 
+db:
+	python -m scripts.db_create
+	python -m scripts.db_migrate
