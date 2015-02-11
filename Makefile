@@ -21,11 +21,12 @@ clean:
 	find . -name '*~' -exec rm -f {} \;
 	find . -name '__pycache__' -exec rmdir {} \;
 	rm -f app.db
+	rm -rf migrations
 	rm -rf db_repository
 	rm -f managrr.log
 
 lint:
-	flake8 --ignore E127,E221,F401 --max-line-length=220 --exclude=db_repository,tests,env .
+	flake8 --ignore E127,E221,F401 --max-line-length=220 --exclude=db_repository,tests,env,migrations .
 
 test:
 	python setup.py test

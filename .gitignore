@@ -4,6 +4,7 @@ wordlists/
 app.db
 todo
 managrr.log
+migrations/
 
 # Distribution / packaging
 db_repository/
