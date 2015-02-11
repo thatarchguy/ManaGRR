@@ -2,7 +2,7 @@ language: python
 python:
   - "2.7"
 # command to install dependencies
-install: "python manage.py install"
+install: "pip install -r requirements.txt"
 # command to run tests
 script: python manage.py test
 

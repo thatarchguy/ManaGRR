@@ -1,7 +1,7 @@
 image: python2.7
 script: 
   - sudo apt-get -y install sqlite3 python-pip python-dev build-essential 1> /dev/null 2> /dev/null
-  - python manage.py install
+  - pip install -r requirements.txt
   - python manage.py test
 notify:
   email:
