@@ -136,7 +136,7 @@ def client_delete(client_id):
             node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             db.session.add(node)
             arguments = "-v " + str(node.vid) + " -r " + node.type + " -n " + hypervisorIP + " -i " + node.net
-            subprocess.Popen(["bash delete.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
+            subprocess.Popen(["bash delete.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/provision/")
 
     client.active = False
     client.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -277,7 +277,7 @@ def node_delete(node_id):
     node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     db.session.add(node)
     arguments = "-v " + str(node.vid) + " -r " + node.type + " -n " + hypervisorIP + " -i " + node.net
-    subprocess.Popen(["bash delete.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
+    subprocess.Popen(["bash delete.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/provision/")
     db.session.commit()
     app.logger.info("Deleted node: " + str(node.id) + " " + node.type)
     return "1"
@@ -306,8 +306,8 @@ def node_checkin():
 
 @app.route('/client/<int:client_id>/status')
 def client_status(client_id):
-    if (os.path.isfile("managrr/provision/" + str(client_id) + ".lockfile")):
-        with open("managrr/provision/" + str(client_id) + ".lockfile", 'r') as f:
+    if (os.path.isfile("provision/" + str(client_id) + ".lockfile")):
+        with open("provision/" + str(client_id) + ".lockfile", 'r') as f:
             status = f.readline()
             f.close()
         if str(status.rstrip()) == "sysprep":
@@ -319,8 +319,8 @@ def client_status(client_id):
         else:
             percent = "10"
         return percent
-    elif (os.path.isfile("managrr/provision/" + str(client_id) + ".worker.lockfile")):
-        with open("managrr/provision/" + str(client_id) + ".worker.lockfile", 'r') as f:
+    elif (os.path.isfile("provision/" + str(client_id) + ".worker.lockfile")):
+        with open("provision/" + str(client_id) + ".worker.lockfile", 'r') as f:
             status = f.readline()
             f.close()
         if str(status.rstrip()) == "sysprep":
@@ -374,10 +374,10 @@ def settings_view():
 
 def check_status(client_id, role="all"):
     if (role == "all"):
-        if (os.path.isfile("managrr/provision/" + str(client_id) + ".lockfile")):
+        if (os.path.isfile("provision/" + str(client_id) + ".lockfile")):
             return True
     if (role == "worker"):
-        if (os.path.isfile("managrr/provision/" + str(client_id) + ".worker.lockfile")):
+        if (os.path.isfile("provision/" + str(client_id) + ".worker.lockfile")):
             return True
     return False
 
@@ -408,7 +408,7 @@ def build_client_local(client, role):
 
     app.logger.info("Building: " + role + " for newclient " + client.name)
     arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n " + hypervisorIP + " -i " + inter
-    subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/managrr/provision/")
+    subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/provision/")
     # Due to the nature of the database model, we need to insert basic information about nodes here.
     # They will be updated with ip address upon creation
     if (role == "all"):
