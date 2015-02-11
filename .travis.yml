@@ -2,9 +2,9 @@ language: python
 python:
   - "2.7"
 # command to install dependencies
-install: "pip install -r requirements.txt"
+install: "python manage.py install"
 # command to run tests
-script: make test
+script: python manage.py test
 
 # whitelist
 branches:

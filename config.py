@@ -30,9 +30,9 @@ class BaseConfiguration(object):
 
 
 class TestConfiguration(BaseConfiguration):
-
     TESTING = True
     WTF_CSRF_ENABLED = False
+    DEBUG = False
 
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'  # + join(_cwd, 'testing.db')
 
