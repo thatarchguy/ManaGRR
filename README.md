@@ -19,7 +19,7 @@ I'm testing on Arch Linux
  - libguestfs 1.28.2-1
 
 
-### The Process
+### The Setup
 ---
 #### Prep servers
 Get ssh keys installed for a root user on the proxmox server. 
@@ -51,16 +51,24 @@ Once this is all verified worked, then run the application.
 ---
 It's still a jumble...
 
-Docker, vagrant, or make env
+Docker, Vagrant, or virtualenv
 
 ```
-pip install requirements.txt
+# Install deps
+python manage.py install
 
 # Create the sqlite database
-python -m scripts.db_create
-python -m scripts.db_migrate
+python manage.py db init
+python manage.py db migrate
+python manage.py db upgrade
 
-python run.py
+# Run the program in server mode
+python manage.py runserver --host=0.0.0.0
+
+# or
+
+# Run a python shell in the program's context
+python manage.py shell
 ```
 
 

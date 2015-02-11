@@ -58,45 +58,43 @@ Setup for Local Development
 
 1. Fork the `GRR-Manager` repo on GitHub.
 2. Clone your fork locally::
-
-    $ git clone git@github.com:your_name_here/GRR-Manager.git
-
+```
+    $ git clone git@github.com:thatarchguy/GRR-Manager.git
+```
 3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
-
-    $ mkvirtualenv GRR-Manager
-    $ cd GRR-Manager/
-    $ python setup.py develop
-
-    or
+```
+    $ virtualenv -p /usr/bin/python2.7 env
+    $ . env/bin/activate 
+    $ pip install -r requirements.txt
+    $ python manage.py test
     
-    $ make env (This is how I do it)
-    $ python setup.py test
-
+```
 4. Create a branch off of dev for local development::
-
+```
     $ git checkout -b name-of-your-bugfix-or-feature
-   
+``` 
    Now you can make your changes locally.
 
 5. When you're done making changes, check that your changes pass flake8 and the tests:
-
-    $ make lint
-    $ python setup.py test
-
-   To get flake8, just pip install them into your virtualenv. 
+```
+    $ python manage.py lint
+    $ python manage.py test
+```
 
 6. Commit your changes and push your branch to GitHub::
-
+```
     $ git add .
     $ git commit -m "Your detailed description of your changes."
     $ git push origin name-of-your-bugfix-or-feature
-
+```
 7. Submit a pull request through the GitHub website.
 
 8. 99 times out of 100...do not commit to Master.
     All merges/commits to Master must be GPG signed and signed off by an admin
+```
     $ git merge -S --no-ff dev
-
+```
     or for a quick commit
-    
+```  
     $ git commit -s -S -m "edited Makefile"
+```
