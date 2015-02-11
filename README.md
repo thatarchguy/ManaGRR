@@ -51,9 +51,9 @@ Once this is all verified worked, then run the application.
 ---
 It's still a jumble...
 
-Docker, vagrant, or make env
+Docker, Vagrant, or virtualenv
 
-``
+```
 # Install deps
 python manage.py install
 
