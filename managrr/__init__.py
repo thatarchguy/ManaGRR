@@ -1,11 +1,19 @@
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask_debugtoolbar import DebugToolbarExtension
+from flask.ext.login import LoginManager
+from flask.ext.bcrypt import Bcrypt
+
 
 app = Flask(__name__)
 app.config.from_object('config.BaseConfiguration')
 db = SQLAlchemy(app)
 toolbar = DebugToolbarExtension(app)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+bcrypt = Bcrypt()
+
 
 import logging
 from logging.handlers import RotatingFileHandler
