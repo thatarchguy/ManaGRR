@@ -1,4 +1,6 @@
 from flask import render_template, request, flash, redirect, url_for
+from flask.ext.login import LoginManager, login_user , logout_user , current_user , login_required
+from flask.ext.bcrypt import Bcrypt
 from managrr import app, db, models
 from .forms import CreateNode, AddClient, AddHyper
 from dateutil.relativedelta import relativedelta
@@ -9,6 +11,15 @@ import subprocess
 import re
 import json
 import socket
+
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+bcrypt = Bcrypt()
+
+@login_manager.user_loader
+def load_user(id):
+    return models.Users.query.get(int(id))
 
 
 @app.errorhandler(404)
@@ -25,6 +36,7 @@ def internal_error(error):
 @app.route('/')
 @app.route('/index')
 @app.route('/index.html')
+@login_required
 def index_view():
 
     # SQLAlchemy to get total clients
@@ -37,12 +49,46 @@ def index_view():
                             hyperCount=hyperCount)
 
 
-@app.route('/login')
+@app.route('/register' , methods=['GET','POST'])
+def register():
+    if request.method == 'GET':
+        return render_template('register.html')
+    password = bcrypt.generate_password_hash(request.form['password'])
+    user = models.Users(request.form['username'] , password , request.form['email'])
+    db.session.add(user)
+    db.session.commit()
+    flash('User: %s successfully registered' % user)
+    return redirect(url_for('login_view'))
+
+
+@app.route('/login' , methods=['GET','POST'])
 def login_view():
-    return render_template('login.html')
+    if request.method == 'GET':
+        return render_template('login.html')
+
+    username = request.form['username']
+    password = request.form['password']
+    remember_me = False
+    if 'remember_me' in request.form:
+        remember_me = True
+    registered_user = models.Users.query.filter_by(username=username).first()
+    if registered_user and bcrypt.check_password_hash(registered_user.password, password):
+        login_user(registered_user, remember = remember_me)
+        flash('%s logged in successfully' % username)
+        return redirect(request.args.get('next') or url_for('index_view'))
+    flash('Username or Password is invalid' , 'error')
+    return redirect(url_for('login_view'))
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login_view'))
 
 
 @app.route('/hypervisors')
+@login_required
 def hypervisors_view():
 
     # SQLAlchemy functions here
@@ -52,6 +98,7 @@ def hypervisors_view():
 
 
 @app.route('/hypervisors/add', methods=['POST', 'GET'])
+@login_required
 def hypervisor_add():
     error = None
     AddHyperForm = AddHyper()
@@ -69,6 +116,7 @@ def hypervisor_add():
 
 
 @app.route('/hypervisor/<int:hyperid>/check')
+@login_required
 def hypervisor_check(hyperid):
     hypervisor = models.Hypervisors.query.get(hyperid)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -87,6 +135,7 @@ def hypervisor_check(hyperid):
 
 
 @app.route('/clients')
+@login_required
 def clients_view():
 
     # SQLAlchemy functions here
@@ -97,6 +146,7 @@ def clients_view():
 
 
 @app.route('/client/<int:client_id>/admin/')
+@login_required
 def client_admin(client_id, new_client=False):
     new_client = request.args.get('new_client')
     new_worker = request.args.get('new_worker')
@@ -121,6 +171,7 @@ def client_admin(client_id, new_client=False):
 
 
 @app.route('/client/<int:client_id>/delete/')
+@login_required
 def client_delete(client_id):
     client  = models.Clients.query.get(client_id)
     nodes   = models.Nodes.query.filter_by(client_id=client.id)
@@ -149,6 +200,7 @@ def client_delete(client_id):
 
 
 @app.route('/client/<int:client_id>/admin/edit', methods=['POST'])
+@login_required
 def client_edit(client_id):
     attribute = request.form['id']
     value = request.form['value']
@@ -180,6 +232,7 @@ def client_edit(client_id):
 
 
 @app.route('/clients/add', methods=['POST', 'GET'])
+@login_required
 def client_add():
     error = None
     AddClientForm = AddClient()
@@ -217,6 +270,7 @@ def client_add():
 
 
 @app.route('/api/nodes/create/', methods=['POST', 'GET'])
+@login_required
 def node_create(client=None, role=None, location=None):
     if request.method == 'POST':
         clientName  = request.form['client']
@@ -264,6 +318,7 @@ def node_create(client=None, role=None, location=None):
 
 
 @app.route('/api/nodes/delete/<int:node_id>')
+@login_required
 def node_delete(node_id):
 
     node  = models.Nodes.query.get(node_id)
@@ -284,6 +339,7 @@ def node_delete(node_id):
 
 
 @app.route('/api/nodes/checkin/', methods=['GET'])
+@login_required
 def node_checkin():
     clientName  = request.args.get('client')
     role        = request.args.get('role')
@@ -305,6 +361,7 @@ def node_checkin():
 
 
 @app.route('/client/<int:client_id>/status')
+@login_required
 def client_status(client_id):
     if (os.path.isfile("provision/" + str(client_id) + ".lockfile")):
         with open("provision/" + str(client_id) + ".lockfile", 'r') as f:
@@ -336,6 +393,7 @@ def client_status(client_id):
 
 
 @app.route('/api/nodes/history')
+@login_required
 def node_history():
     prevMonth = []
     results = []
@@ -368,6 +426,7 @@ def node_history():
 
 
 @app.route('/settings')
+@login_required
 def settings_view():
     return render_template('settings.html', title="Settings")
 
