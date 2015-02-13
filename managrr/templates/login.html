@@ -9,6 +9,15 @@
                         <h3 class="panel-title">Please Sign In</h3>
                     </div>
                     <div class="panel-body">
+                        {% with messages = get_flashed_messages() %}
+                            {% if messages %}
+                            <ul class=flashes>
+                            {% for message in messages %}
+                                <li><span style="color:red">{{ message | safe }}</span></li>
+                            {% endfor %}
+                            </ul>
+                          {% endif %}
+                        {% endwith %}
                         <form action="" method=post role="form">
                             <fieldset>
                                 <div class="form-group">

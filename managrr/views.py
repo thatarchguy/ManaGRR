@@ -1,5 +1,6 @@
 from flask import render_template, request, flash, redirect, url_for
 from flask.ext.login import LoginManager, login_user , logout_user , current_user , login_required
+from flask.ext.bcrypt import Bcrypt
 from managrr import app, db, models
 from .forms import CreateNode, AddClient, AddHyper
 from dateutil.relativedelta import relativedelta
@@ -52,7 +53,8 @@ def index_view():
 def register():
     if request.method == 'GET':
         return render_template('register.html')
-    user = models.Users(request.form['username'] , request.form['password'],request.form['email'])
+    password = bcrypt.generate_password_hash(request.form['password'])
+    user = models.Users(request.form['username'] , password , request.form['email'])
     db.session.add(user)
     db.session.commit()
     flash('User: %s successfully registered' % user)
@@ -69,13 +71,13 @@ def login_view():
     remember_me = False
     if 'remember_me' in request.form:
         remember_me = True
-    registered_user = models.Users.query.filter_by(username=username,password=password).first()
-    if registered_user is None:
-        flash('Username or Password is invalid' , 'error')
-        return redirect(url_for('login'))
-    login_user(registered_user, remember = remember_me)
-    flash('%s logged in successfully' % username)
-    return redirect(request.args.get('next') or url_for('index_view'))
+    registered_user = models.Users.query.filter_by(username=username).first()
+    if registered_user and bcrypt.check_password_hash(registered_user.password, password):
+        login_user(registered_user, remember = remember_me)
+        flash('%s logged in successfully' % username)
+        return redirect(request.args.get('next') or url_for('index_view'))
+    flash('Username or Password is invalid' , 'error')
+    return redirect(url_for('login_view'))
 
 
 @app.route('/logout')
