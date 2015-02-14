@@ -1,7 +1,6 @@
 from flask import render_template, request, flash, redirect, url_for
-from flask.ext.login import LoginManager, login_user , logout_user , current_user , login_required
-from flask.ext.bcrypt import Bcrypt
-from managrr import app, db, models
+from flask.ext.login import login_user , logout_user , current_user , login_required
+from managrr import app, db, models, login_manager, bcrypt
 from .forms import CreateNode, AddClient, AddHyper
 from dateutil.relativedelta import relativedelta
 import os
@@ -13,9 +12,10 @@ import json
 import socket
 
 
-login_manager = LoginManager()
-login_manager.init_app(app)
-bcrypt = Bcrypt()
+@login_manager.unauthorized_handler
+def unauthorized_callback():
+    return redirect('/login?next=' + request.path)
+
 
 @login_manager.user_loader
 def load_user(id):
