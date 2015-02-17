@@ -1,6 +1,6 @@
 from flask import render_template, request, flash, redirect, url_for
-from flask.ext.login import login_user , logout_user , current_user , login_required
-from managrr import app, db, models, login_manager, bcrypt
+from flask.ext.login import login_user, logout_user, current_user, login_required
+from managrr import app, db, models, login_manager, bcrypt, q
 from .forms import CreateNode, AddClient, AddHyper
 from dateutil.relativedelta import relativedelta
 import os
@@ -49,19 +49,19 @@ def index_view():
                             hyperCount=hyperCount)
 
 
-@app.route('/register' , methods=['GET','POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'GET':
         return render_template('register.html')
     password = bcrypt.generate_password_hash(request.form['password'])
-    user = models.Users(request.form['username'] , password , request.form['email'])
+    user = models.Users(request.form['username'], password, request.form['email'])
     db.session.add(user)
     db.session.commit()
     flash('User: %s successfully registered' % user)
     return redirect(url_for('login_view'))
 
 
-@app.route('/login' , methods=['GET','POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login_view():
     if request.method == 'GET':
         return render_template('login.html')
@@ -73,10 +73,10 @@ def login_view():
         remember_me = True
     registered_user = models.Users.query.filter_by(username=username).first()
     if registered_user and bcrypt.check_password_hash(registered_user.password, password):
-        login_user(registered_user, remember = remember_me)
+        login_user(registered_user, remember=remember_me)
         flash('%s logged in successfully' % username)
         return redirect(request.args.get('next') or url_for('index_view'))
-    flash('Username or Password is invalid' , 'error')
+    flash('Username or Password is invalid', 'error')
     return redirect(url_for('login_view'))
 
 
@@ -122,7 +122,6 @@ def hypervisor_check(hyperid):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         s.connect((hypervisor.IP, 8006))
-        print "Port 8006 reachable"
         hypervisor.status = 1
         db.session.commit()
     except socket.error as e:
@@ -494,3 +493,15 @@ def build_client_aws(client, key):
     app.logger.info("build_client_aws " + str(client.id) + key)
 
     return True
+
+
+def test_function():
+    app.logger.info("other function")
+    return True
+
+
+@app.route('/testqueue')
+def testqueue():
+    job = q.enqueue(test_function)
+  
+    return "RAWR"
