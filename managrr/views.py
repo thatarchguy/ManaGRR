@@ -267,6 +267,7 @@ def client_add():
 
     return render_template('addclient.html', title='Add Client', AddClientForm=AddClientForm, error=error)
 
+
 # This function is only for creating workers
 # the db and controller are only made through the build_client
 @app.route('/api/nodes/create/', methods=['POST', 'GET'])
@@ -482,14 +483,13 @@ def build_client(client):
     # They will be updated with ip address upon creation
     addDatabase = models.Nodes(client_id=client.id, type="database", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
     addControl  = models.Nodes(client_id=client.id, type="control", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid + 1)
-    addWorker   = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid + 2) 
+    addWorker   = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid + 2)
     db.session.add(addDatabase)
     db.session.add(addControl)
     db.session.add(addWorker)
     db.session.commit()
 
     return True
-
 
 
 def build_worker_local(client):
@@ -503,7 +503,7 @@ def build_worker_local(client):
         vid = lastVid.vid + 1
 
     clientInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).filter(models.Nodes.client_id == client.id).first()
-    inter = str(clientInterface.net)   
+    inter = str(clientInterface.net)
 
     app.logger.info("Building: worker for newclient " + client.name)
     arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r worker -n " + hypervisorIP + " -i " + inter
@@ -514,6 +514,7 @@ def build_worker_local(client):
     db.session.commit()
 
     return True
+
 
 def build_worker_digiocean(client, key):
     app.logger.info("build_client_digiocean " + str(client.id) + key)
@@ -534,5 +535,4 @@ def test_function():
 @app.route('/testqueue')
 def testqueue():
     job = q.enqueue(test_function)
-  
     return "RAWR"

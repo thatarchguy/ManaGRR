@@ -50,8 +50,8 @@ def lint():
 @manager.command
 def clean():
     '''Cleans the codebase'''
-    commands = ["find . -name '*.pyc' -exec rm -f {} \;", "find . -name '*.pyo' -exec rm -f {} \;", 
-                "find . -name '*~' -exec rm -f {} \;", "find . -name '__pycache__' -exec rmdir {} \;", 
+    commands = ["find . -name '*.pyc' -exec rm -f {} \;", "find . -name '*.pyo' -exec rm -f {} \;",
+                "find . -name '*~' -exec rm -f {} \;", "find . -name '__pycache__' -exec rmdir {} \;",
                 "rm -f app.db", "rm -rf migrations", "rm -f managrr.log"]
     for command in commands:
         print "Running " + command
