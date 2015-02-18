@@ -259,7 +259,7 @@ def client_add():
 
             client = models.Clients.query.get(newClient.id)
 
-            build_client_local(client, "all")
+            job = q.enqueue(build_client, client)
 
             return redirect(url_for('client_admin', client_id=newClient.id, new_client=True))
         else:
@@ -267,13 +267,15 @@ def client_add():
 
     return render_template('addclient.html', title='Add Client', AddClientForm=AddClientForm, error=error)
 
-
+# This function is only for creating workers
+# the db and controller are only made through the build_client
 @app.route('/api/nodes/create/', methods=['POST', 'GET'])
 @login_required
 def node_create(client=None, role=None, location=None):
     if request.method == 'POST':
         clientName  = request.form['client']
         location    = request.form['location']
+        # HEY. Look at this. Why do these exist. wont that not work on elif location== below?
         digiocean   = request.form['digiocean']
         aws         = request.form['aws']
     # This function was tested in python CLI. Seems to work.
@@ -284,31 +286,31 @@ def node_create(client=None, role=None, location=None):
             clientKey.aws = key
             app.logger.info("ClientKey Added: " + str(client.id) + "," + client.name + "," + location)
             db.session.commit()
-            build_client_aws(client, key)
+            job = q.enqueue(build_worker_aws, client, key)
         elif location == "digiocean":
             key = digiocean
             clientKey = models.Keys.query.filter_by(client_id=client.id).first()
             clientKey.digiocean = key
             app.logger.info("ClientKey Added: " + str(client.id) + "," + client.name + "," + location)
             db.session.commit()
-            build_client_digiocean(client, key)
+            job = q.enqueue(build_worker_digiocean, client, key)
         elif location == "proxmox":
-            build_client_local(client, "worker")
+            job = q.enqueue(build_worker_local, client)
         else:
             return "0"
-    # This part is not necessary, functions can directly call the build_client_* functions.
-    # I just wanted a central place to call the functions from.
+    # This part is not necessary, functions can directly call the build_worker_* functions.
+    # I just wanted a central place to call the functions from that wasn't a web request
     elif client is not None:
         role        = role
         location    = location
         if location == "aws":
             key  = models.Keys.query.get(client.id).aws
-            build_client_aws(client, key)
+            build_worker_aws(client, key)
         elif location == "digiocean":
             key = models.Keys.query.get(client.id).digiocean
-            build_client_digiocean(client, key)
+            build_worker_digiocean(client, key)
         elif location == "proxmox":
-            build_client_local(client, "worker")
+            build_worker_local(client)
 
     else:
         return "0"
@@ -440,7 +442,7 @@ def check_status(client_id, role="all"):
     return False
 
 
-def build_client_local(client, role):
+def build_client(client):
     if check_status(client.id) is True:
         return False
 
@@ -451,52 +453,67 @@ def build_client_local(client, role):
     else:
         vid = lastVid.vid + 1
 
-    if (role == "all"):
-        lastInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).filter_by(active=True).first()
-        if lastInterface is None:
-            inter = "vmbr10"
-        else:
-            inter = str(lastInterface.net)
-            interid = re.split('(\d+)', inter)
-            inter = "vmbr" + str(int(interid[1]) + 1)
+    lastInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).filter_by(active=True).first()
+    if lastInterface is None:
+        inter = "vmbr10"
+    else:
+        inter = str(lastInterface.net)
+        interid = re.split('(\d+)', inter)
+        inter = "vmbr" + str(int(interid[1]) + 1)
 
-    elif (role == "worker"):
-        clientInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).filter(models.Nodes.client_id == client.id).first()
-        inter = str(clientInterface.net)
-
-    app.logger.info("Building: " + role + " for newclient " + client.name)
-    arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r " + role + " -n " + hypervisorIP + " -i " + inter
+    app.logger.info("Building: all for newclient " + client.name)
+    arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r all -n " + hypervisorIP + " -i " + inter
     subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/provision/")
     # Due to the nature of the database model, we need to insert basic information about nodes here.
     # They will be updated with ip address upon creation
-    if (role == "all"):
-        addDatabase = models.Nodes(client_id=client.id, type="database", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
-        addWorker   = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid + 1)
-        addControl  = models.Nodes(client_id=client.id, type="control", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid + 2)
-        db.session.add(addDatabase)
-        db.session.add(addWorker)
-        db.session.add(addControl)
-        db.session.commit()
-    elif (role == "worker"):
-        addWorker = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
-        db.session.add(addWorker)
-        db.session.commit()
+    addDatabase = models.Nodes(client_id=client.id, type="database", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
+    addControl  = models.Nodes(client_id=client.id, type="control", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid + 1)
+    addWorker   = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid + 2) 
+    db.session.add(addDatabase)
+    db.session.add(addControl)
+    db.session.add(addWorker)
+    db.session.commit()
+
     return True
 
 
-def build_client_digiocean(client, key):
+
+def build_worker_local(client):
+    if check_status(client.id) is True:
+        return False
+    hypervisorIP = models.Hypervisors.query.get(client.hyperv_id).IP
+    lastVid = models.Nodes.query.order_by(models.Nodes.vid.desc()).filter_by(active=True).first()
+    if lastVid is None:
+        vid = 200
+    else:
+        vid = lastVid.vid + 1
+
+    clientInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).filter(models.Nodes.client_id == client.id).first()
+    inter = str(clientInterface.net)   
+
+    app.logger.info("Building: worker for newclient " + client.name)
+    arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r worker -n " + hypervisorIP + " -i " + inter
+    subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/provision/")
+
+    addWorker = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
+    db.session.add(addWorker)
+    db.session.commit()
+
+    return True
+
+def build_worker_digiocean(client, key):
     app.logger.info("build_client_digiocean " + str(client.id) + key)
     return True
 
 
-def build_client_aws(client, key):
+def build_worker_aws(client, key):
     app.logger.info("build_client_aws " + str(client.id) + key)
 
     return True
 
 
 def test_function():
-    app.logger.info("other function")
+    app.logger.info("Testing Queue")
     return True
 
 
