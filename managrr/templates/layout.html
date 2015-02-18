@@ -147,6 +147,13 @@
 
 {% include "scripts.html" %}
 
+{#  This used to be in scripts.html but apparently nested blocks 
+    don't work anymore...
+#}
+
+{% block scripts %}
+{% endblock %}
+
 </body>
 
 </html>
