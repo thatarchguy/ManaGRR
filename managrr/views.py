@@ -1,7 +1,7 @@
 from flask import render_template, request, flash, redirect, url_for
 from flask.ext.login import login_user , logout_user , current_user , login_required
 from managrr import app, db, models, login_manager, bcrypt
-from .forms import CreateNode, AddClient, AddHyper
+from .forms import CreateNode, AddClient, AddHyper, SettingsPass
 from dateutil.relativedelta import relativedelta
 import os
 import datetime
@@ -425,10 +425,24 @@ def node_history():
     return jsondumps
 
 
-@app.route('/settings')
+@app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings_view():
-    return render_template('settings.html', title="Settings")
+    error = None
+    ChangePassForm = SettingsPass()
+    user = current_user
+    if ChangePassForm.validate_on_submit():
+        currentPass = request.form['currentPass']
+        if bcrypt.check_password_hash(user.password, currentPass):
+            newPass = bcrypt.generate_password_hash(request.form['newPass'])
+            user.password = newPass
+            db.session.add(user)
+            db.session.commit()
+            app.logger.info("Changed password for: " + user.username)
+            return redirect('/settings')
+        else:
+            error = "Current password was incorrect"
+    return render_template('settings.html', title="Settings", ChangePassForm=ChangePassForm, error=error)
 
 
 def check_status(client_id, role="all"):

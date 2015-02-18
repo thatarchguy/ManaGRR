@@ -1,6 +1,6 @@
 from flask.ext.wtf import Form
-from wtforms import StringField, BooleanField, SelectField
-from wtforms.validators import DataRequired
+from wtforms import StringField, BooleanField, SelectField, PasswordField
+from wtforms.validators import DataRequired, Required, EqualTo
 from managrr import models, db
 
 
@@ -24,3 +24,9 @@ class AddClient(Form):
 class AddHyper(Form):
     location        = StringField(u'location', validators=[DataRequired()])
     ip              = StringField(u'ip', validators=[DataRequired()])
+
+
+class SettingsPass(Form):
+    currentPass     = PasswordField('currentpass', validators=[DataRequired()])
+    newPass         = PasswordField('New Password', [Required(), EqualTo('newPassVerify', message='Passwords must match')])
+    newPassVerify   = PasswordField('Repeat Password')
