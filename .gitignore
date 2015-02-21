@@ -5,7 +5,7 @@ app.db
 todo
 managrr.log
 migrations/
-
+*.swp
 # Distribution / packaging
 db_repository/
 ubuntu14.iso

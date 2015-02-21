@@ -49,6 +49,7 @@ def index_view():
                             hyperCount=hyperCount)
 
 
+"""
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'GET':
@@ -59,7 +60,7 @@ def register():
     db.session.commit()
     flash('User: %s successfully registered' % user)
     return redirect(url_for('login_view'))
-
+"""
 
 @app.route('/login', methods=['GET', 'POST'])
 def login_view():
@@ -125,7 +126,7 @@ def hypervisor_check(hyperid):
         hypervisor.status = 1
         db.session.commit()
     except socket.error as e:
-        print "Error on connect: %s" % e
+        # print "Error on connect: %s" % e
         hypervisor.status = 0
         db.session.commit()
     s.close()

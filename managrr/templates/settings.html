@@ -20,13 +20,13 @@
 {% block content %}
 
 <div class="row">
-    <div class="col-lg-6">
+    <div class="col-lg-6 col-md-offset-3">
         <div class="panel panel-default">
             <div class="panel-heading">
                 Change Settings
             </div>
             <div class="panel-body">
-                <form id="general" method="POST">
+                <form id="general" method="POST" class="form-horizontal">
                     {{ GeneralForm.hidden_tag() }}
                     <div class="form-group">
                         <label for="email">Email:</label>
@@ -46,13 +46,13 @@
 </div>
 
 <div class="row">
-    <div class="col-lg-6">
+    <div class="col-lg-6 col-md-offset-3">
         <div class="panel panel-default">
             <div class="panel-heading">
                 Change Password 
             </div>
             <div class="panel-body">
-                <form id="password" method="POST">
+                <form id="password" method="POST" class="form-horizontal">
                     {{ ChangePassForm.hidden_tag() }}
                     <div class="form-group">
                         <label for="currentpass">Current Password:</label>
