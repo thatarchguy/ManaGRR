@@ -1,7 +1,7 @@
 from flask import render_template, request, flash, redirect, url_for
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from managrr import app, db, models, login_manager, bcrypt, q
-from .forms import CreateNode, AddClient, AddHyper, SettingsPass
+from .forms import CreateNode, AddClient, AddHyper, SettingsPass, SettingsGeneral
 from dateutil.relativedelta import relativedelta
 import os
 import datetime
@@ -431,8 +431,17 @@ def node_history():
 @login_required
 def settings_view():
     error = None
-    ChangePassForm = SettingsPass()
     user = current_user
+    GeneralForm     = SettingsGeneral(email=user.email) 
+    ChangePassForm  = SettingsPass()
+    if GeneralForm.validate_on_submit():
+        email       = request.form['email']
+        user.email = email
+        db.session.add(user)
+        db.session.commit()
+        app.logger.info("Changed email for: " + user.username)
+        flash('Email successfully changed')
+        return redirect('/settings')
     if ChangePassForm.validate_on_submit():
         currentPass = request.form['currentPass']
         if bcrypt.check_password_hash(user.password, currentPass):
@@ -441,10 +450,11 @@ def settings_view():
             db.session.add(user)
             db.session.commit()
             app.logger.info("Changed password for: " + user.username)
+            flash('Password successfully changed')
             return redirect('/settings')
         else:
             error = "Current password was incorrect"
-    return render_template('settings.html', title="Settings", ChangePassForm=ChangePassForm, error=error)
+    return render_template('settings.html', title="Settings", ChangePassForm=ChangePassForm, GeneralForm=GeneralForm, error=error)
 
 
 def check_status(client_id, role="all"):

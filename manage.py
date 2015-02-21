@@ -26,7 +26,10 @@ def createdb():
     os.system('python manage.py db init')
     os.system('python manage.py db migrate')
     os.system('python manage.py db upgrade')
-
+    # Default creds, admin:managrr
+    user = models.Users('admin', '$2a$12$Z5tbHyVU4MeBBKbtgGQa3u9FniItNFPhHpK73rKwAVuAWkXN1oYpe', 'admin@example.com')
+    db.session.add(user)
+    db.session.commit()
 
 @manager.shell
 def make_shell_context():

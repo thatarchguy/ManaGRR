@@ -30,3 +30,7 @@ class SettingsPass(Form):
     currentPass     = PasswordField('currentpass', validators=[DataRequired()])
     newPass         = PasswordField('New Password', [Required(), EqualTo('newPassVerify', message='Passwords must match')])
     newPassVerify   = PasswordField('Repeat Password')
+
+
+class SettingsGeneral(Form):
+    email           = StringField(u'email', validators=[DataRequired()])
