@@ -29,10 +29,10 @@ stdpkg
 
 source /usr/share/grr/scripts/shell_helpers.sh
 
-grr_stop_all
-#service grr-http-server stop    # This is 8080
-#service grr-ui stop             # This is 8000 address & 44449
-#service grr-enroller stop       # This is 44442
+service grr-http-server stop    # This is 8080
+service grr-ui stop             # This is 8000 address & 44449
+service grr-enroller stop       # This is 44442
+service grr-worker stop
 service mongodb stop
 
 echo "Mongo.server: 10.0.5.2" >> /etc/grr/server.local.yaml
@@ -72,12 +72,10 @@ stdpkg
 
 /bin/bash /usr/share/grr/scripts/initctl_switch.sh multi
 
-source /usr/share/grr/scripts/shell_helpers.sh
-
-grr_stop_all
-#service grr-http-server stop    # This is 8080
-#service grr-ui stop             # This is 8000 address & 44449
-#service grr-enroller stop       # This is 44442
+service grr-http-server stop    # This is 8080
+service grr-ui stop             # This is 8000 address & 44449
+service grr-enroller stop       # This is 44442
+service grr-worker stop
 service mongodb stop
 
 echo "Mongo.server: 10.0.5.2" >> /etc/grr/server.local.yaml
@@ -112,7 +110,10 @@ stdpkg
 
 source /usr/share/grr/scripts/shell_helpers.sh
 
-grr_stop_all
+service grr-http-server stop    # This is 8080
+service grr-ui stop             # This is 8000 address & 44449
+service grr-enroller stop       # This is 44442
+service grr-worker stop
 service mongodb stop
 
 echo "Mongo.server: 10.0.5.2" >> /etc/grr/server.local.yaml
@@ -140,11 +141,11 @@ function stdpkg {
 }
 
 
-if [[ $HOSTNAME =~ [/DB/] ]]; then
+if [[ $HOSTNAME == *DB ]]; then
     DB
-elif [[ $HOSTNAME =~ [/worker/] ]]; then
+elif [[ $HOSTNAME == *worker ]]; then
     worker
-elif [[ $HOSTNAME =~ [/control/] ]]; then
+elif [[ $HOSTNAME == *control ]]; then
     control
 fi
 
