@@ -30,7 +30,7 @@
     <tbody>    
     {% for entry in entries %}
         <tr>
-            <td><a href="http://{{ entry.IP }}:8006">{{ entry.IP }}</a></td>
+            <td><a href="https://{{ entry.IP }}:8006">{{ entry.IP }}</a></td>
             <td>{{ entry.location }}</td>
             {% if entry.status == 0 %}
             <td><a class="btn btn-danger" href="/hypervisor/{{ entry.id }}/check" title="click to recheck">Offline</a>

@@ -8,6 +8,7 @@ echo "[+] Sysprepping"
 virt-sysprep -a ubuntu_qemu/ubuntu14-$CLIENT-worker.qcow2
 
 virt-copy-in -a ubuntu_qemu/ubuntu14-$CLIENT-worker.qcow2 configure.sh /
+virt-copy-in -a ubuntu_qemu/ubuntu14-$CLIENT-worker.qcow2 grr_install/install_script_ubuntu.sh /
 
 virt-sysprep --enable customize \
     --root-password password:s3cur3password \
@@ -25,6 +26,7 @@ cp ubuntu_qemu/qemu-ubuntu14-base.qcow2 ubuntu_qemu/ubuntu14-$CLIENT-db.qcow2
 virt-sysprep -a ubuntu_qemu/ubuntu14-$CLIENT-db.qcow2
 
 virt-copy-in -a ubuntu_qemu/ubuntu14-$CLIENT-db.qcow2 configure.sh /
+virt-copy-in -a ubuntu_qemu/ubuntu14-$CLIENT-db.qcow2 grr_install/install_script_ubuntu.sh /
 
 virt-sysprep --enable customize \
     --root-password password:s3cur3password \
@@ -42,6 +44,7 @@ cp ubuntu_qemu/qemu-ubuntu14-base.qcow2 ubuntu_qemu/ubuntu14-$CLIENT-control.qco
 virt-sysprep -a ubuntu_qemu/ubuntu14-$CLIENT-control.qcow2
 
 virt-copy-in -a ubuntu_qemu/ubuntu14-$CLIENT-control.qcow2 configure.sh /
+virt-copy-in -a ubuntu_qemu/ubuntu14-$CLIENT-control.qcow2 grr_install/install_script_ubuntu.sh /
 
 virt-sysprep --enable customize \
     --root-password password:s3cur3password \
