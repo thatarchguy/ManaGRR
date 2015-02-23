@@ -10,4 +10,7 @@ script: python manage.py test
 branches:
   only:
     - master
-    - dev
+    - de
+# Irc notifications
+notifications:
+  irc: "chat.freenode.net#managrr-dev"
