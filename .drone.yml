@@ -8,9 +8,9 @@ notify:
     recipients:
       - kevin@stealsyour.pw
   irc:
-    channel: capstone 
-    nick: Craig 
-    server: "irc.arcti.cc:6697"
+    channel: managrr-dev 
+    nick: ManagrrBot 
+    server: "irc.freenode.net:6667"
     on_started: true
     on_success: true
     on_failure: true
