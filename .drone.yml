@@ -7,7 +7,6 @@ notify:
   email:
     recipients:
       - kevin@stealsyour.pw
-notify:
   irc:
     channel: capstone 
     nick: Craig 
