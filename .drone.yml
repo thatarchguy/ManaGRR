@@ -7,3 +7,12 @@ notify:
   email:
     recipients:
       - kevin@stealsyour.pw
+notify:
+  irc:
+    channel: capstone 
+    nick: Craig 
+    server: "irc.arcti.cc:6697"
+    on_started: true
+    on_success: true
+    on_failure: true
+
