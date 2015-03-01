@@ -58,6 +58,8 @@ Docker, Vagrant, or virtualenv
 python manage.py install
 
 # Create the sqlite database
+python manage.py createdb
+#OR
 python manage.py db init
 python manage.py db migrate
 python manage.py db upgrade
