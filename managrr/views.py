@@ -62,6 +62,7 @@ def register():
     return redirect(url_for('login_view'))
 """
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login_view():
     if request.method == 'GET':
@@ -92,7 +93,6 @@ def logout():
 @login_required
 def hypervisors_view():
 
-    # SQLAlchemy functions here
     hypervisors = models.Hypervisors.query.all()
 
     return render_template('hypervisors.html', title="Hypervisors", entries=hypervisors)
@@ -125,8 +125,7 @@ def hypervisor_check(hyperid):
         s.connect((hypervisor.IP, 8006))
         hypervisor.status = 1
         db.session.commit()
-    except socket.error as e:
-        # print "Error on connect: %s" % e
+    except socket.error:
         hypervisor.status = 0
         db.session.commit()
     s.close()
@@ -138,7 +137,6 @@ def hypervisor_check(hyperid):
 @login_required
 def clients_view():
 
-    # SQLAlchemy functions here
     clients = models.Clients.query.filter_by(active=True).all()
     hyperCount   = models.Hypervisors.query.count()
 
@@ -433,7 +431,7 @@ def node_history():
 def settings_view():
     error = None
     user = current_user
-    GeneralForm     = SettingsGeneral(email=user.email) 
+    GeneralForm     = SettingsGeneral(email=user.email)
     ChangePassForm  = SettingsPass()
     if GeneralForm.validate_on_submit():
         email       = request.form['email']
