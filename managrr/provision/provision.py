@@ -4,6 +4,7 @@ Class for deploying nodes
 from managrr import models, db, app
 from sh import virt_sysprep, virt_copy_in, ssh, mkdir
 from shutil import copyfile, move
+import datetime
 
 class ClientClass:
 
@@ -29,12 +30,12 @@ class ClientClass:
         app.logger.info("Building: all for newclient " + self.client.name)
         
         app.logger.info("Sysprepping " + self.client.name + ": DB")
-        copyfile("deploy/ubuntu_qemu/qemu-ubuntu14-base.qcow2", "deploy/ubuntu_qemu/ubuntu14-" + self.client.name + "-db.qcow2")
+        copyfile("deploy/ubuntu_qemu/qemu-ubuntu14-base.qcow2", "deploy/ubuntu_qemu/ubuntu14-" + self.client.name + "-DB.qcow2")
         virt_sysprep("-a", "deploy/ubuntu_qemu/ubuntu14-" + self.client.name + "-DB.qcow2")
         virt_copy_in("-a", "deploy/ubuntu_qemu/ubuntu14-" + self.client.name + "-DB.qcow2", "deploy/configure.sh", "/")
         virt_copy_in("-a", "deploy/ubuntu_qemu/ubuntu14-" + self.client.name + "-DB.qcow2", "deploy/grr_install/install_script_ubuntu.sh", "/")
         
-        virt_sysprep("--enable", "customize", "--root-password", "password:s3cur3password", "--firstboot", "deploy/configure.sh", "--hostname", self.client.name + "-DB", "-a", "deploy/ubuntu_qemu/ubuntu14-" + self.client.name + "-db.qcow2")
+        virt_sysprep("--enable", "customize", "--root-password", "password:s3cur3password", "--firstboot", "deploy/configure.sh", "--hostname", self.client.name + "-DB", "-a", "deploy/ubuntu_qemu/ubuntu14-" + self.client.name + "-DB.qcow2")
  
         app.logger.info("Sysprepping " + self.client.name + ": Control")
         copyfile("deploy/ubuntu_qemu/qemu-ubuntu14-base.qcow2", "deploy/ubuntu_qemu/ubuntu14-" + self.client.name + "-control.qcow2")
