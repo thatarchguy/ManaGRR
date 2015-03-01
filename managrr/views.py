@@ -3,6 +3,7 @@ from flask.ext.login import login_user, logout_user, current_user, login_require
 from managrr import app, db, models, login_manager, bcrypt, q
 from .forms import CreateNode, AddClient, AddHyper, SettingsPass, SettingsGeneral
 from dateutil.relativedelta import relativedelta
+from provision.provision import ClientClass
 import os
 import datetime
 import time
@@ -543,5 +544,7 @@ def test_function():
 
 @app.route('/testqueue')
 def testqueue():
-    job = q.enqueue(test_function)
+    rawr = models.Clients.query.get(1)
+    client = ClientClass(rawr)
+    client.build_base()
     return "RAWR"

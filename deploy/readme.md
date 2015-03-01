@@ -8,3 +8,6 @@ then run sysprep.sh
  
 then run proxmox.sh
  - you will need ssh keys installed on the proxmox server 
+
+
+managrr/provision/provision.py reads & writes in this directory

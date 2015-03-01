@@ -9,7 +9,9 @@ migrations/
 # Distribution / packaging
 db_repository/
 ubuntu14.iso
+*.iso
 *.qcow2
+packer_cache/
 
 .Python
 env/
