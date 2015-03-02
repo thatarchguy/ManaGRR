@@ -16,3 +16,5 @@ Flask-Login==0.2.11
 redis==2.10.3
 rq==0.5.0
 rq-dashboard==0.3.4
+sh==1.11
+gunicorn==19.2.1

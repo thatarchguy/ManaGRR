@@ -60,6 +60,25 @@ class Keys(db.Model):
         return '<Client: %r>' % (self.client_id)
 
 
+class Jobs(db.Model):
+    """
+    Database model to hold running jobs from Redis
+    You'd think redis would keep track of this...
+    https://github.com/nvie/rq/issues/476
+    You can't list jobs that are done / running
+    You can however, get status information if you know the key
+
+    I could of totally just handled all the status stuff here instead of in the job metadata. hmm
+    """
+    client_id  = db.Column(db.Integer, db.ForeignKey('clients.id'), primary_key=True)
+    role       = db.Column(db.String(16))
+    job_key    = db.Column(db.String(128))
+
+
+    def __repr__(self):
+        return '<Type: %r>' % (self.type)
+
+
 class Clients(db.Model):
     """
     Database Model for Clients

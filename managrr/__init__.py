@@ -16,7 +16,7 @@ toolbar = DebugToolbarExtension(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 bcrypt = Bcrypt()
-q = Queue(connection=conn)
+q = Queue('high', connection=conn)
 RQDashboard(app)
 
 import logging

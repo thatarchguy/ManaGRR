@@ -4,6 +4,7 @@ from managrr import app, db, models, login_manager, bcrypt, q
 from .forms import CreateNode, AddClient, AddHyper, SettingsPass, SettingsGeneral
 from dateutil.relativedelta import relativedelta
 from provision.provision import ClientClass
+from rq import get_current_job
 import os
 import datetime
 import time
@@ -258,8 +259,11 @@ def client_add():
                 app.logger.info("ClientKey Added: [NEWCLIENT]" + str(newClient.id) + "," + newClient.name + ",ssh")
 
             client = models.Clients.query.get(newClient.id)
-
-            job = q.enqueue(build_client, client)
+            clientObj = ClientClass(client)
+            job = q.enqueue(clientObj.build_base, timeout=1000)
+            jobDB = models.Jobs(client_id=client.id, job_key=job.id)
+            db.session.add(jobDB)
+            db.session.commit()
 
             return redirect(url_for('client_admin', client_id=newClient.id, new_client=True))
         else:
@@ -276,27 +280,27 @@ def node_create(client=None, role=None, location=None):
     if request.method == 'POST':
         clientName  = request.form['client']
         location    = request.form['location']
-        # HEY. Look at this. Why do these exist. wont that not work on elif location== below?
         digiocean   = request.form['digiocean']
         aws         = request.form['aws']
     # This function was tested in python CLI. Seems to work.
         client = models.Clients.query.filter_by(name=clientName).first()
+        clientObj = ClientClass(client)
         if location == "aws":
             key = aws
             clientKey = models.Keys.query.filter_by(client_id=client.id).first()
             clientKey.aws = key
             app.logger.info("ClientKey Added: " + str(client.id) + "," + client.name + "," + location)
             db.session.commit()
-            job = q.enqueue(build_worker_aws, client, key)
+            job = q.enqueue(clientObj.build_worker_aws, client, key)
         elif location == "digiocean":
             key = digiocean
             clientKey = models.Keys.query.filter_by(client_id=client.id).first()
             clientKey.digiocean = key
             app.logger.info("ClientKey Added: " + str(client.id) + "," + client.name + "," + location)
             db.session.commit()
-            job = q.enqueue(build_worker_digiocean, client, key)
+            job = q.enqueue(clientObj.build_worker_digiocean, client, key)
         elif location == "proxmox":
-            job = q.enqueue(build_worker_local, client)
+            job = q.enqueue(clientObj.build_worker_local, timeout=300)
         else:
             return "0"
     # This part is not necessary, functions can directly call the build_worker_* functions.
@@ -365,33 +369,19 @@ def node_checkin():
 @app.route('/client/<int:client_id>/status')
 @login_required
 def client_status(client_id):
-    if (os.path.isfile("provision/" + str(client_id) + ".lockfile")):
-        with open("provision/" + str(client_id) + ".lockfile", 'r') as f:
-            status = f.readline()
-            f.close()
-        if str(status.rstrip()) == "sysprep":
+    percent = "0"
+    jobDB = models.Jobs.query.filter_by(client_id=client_id).first()
+    if jobDB:
+        job = q.fetch_job(jobDB.job_key)
+        if str(job.meta['progress']) == "sysprep":
             percent = "30"
-        elif str(status.rstrip()) == "proxmox":
+        elif str(job.meta['progress']) == "proxmox":
             percent = "50"
-        elif str(status.rstrip()) == "installing":
+        elif str(job.meta['progress']) == "installing":
             percent = "80"
         else:
             percent = "10"
-        return percent
-    elif (os.path.isfile("provision/" + str(client_id) + ".worker.lockfile")):
-        with open("provision/" + str(client_id) + ".worker.lockfile", 'r') as f:
-            status = f.readline()
-            f.close()
-        if str(status.rstrip()) == "sysprep":
-            percent = "30"
-        elif str(status.rstrip()) == "proxmox":
-            percent = "50"
-        elif str(status.rstrip()) == "installing":
-            percent = "80"
-        else:
-            percent = "10"
-        return percent
-    return "0"
+    return percent
 
 
 @app.route('/api/nodes/history')
@@ -459,92 +449,43 @@ def settings_view():
 
 def check_status(client_id, role="all"):
     if (role == "all"):
-        if (os.path.isfile("provision/" + str(client_id) + ".lockfile")):
+        jobDB = models.Jobs.query.filter_by(client_id=client_id).first()
+        if jobDB:
+            job = q.fetch_job(jobDB.job_key)
+            jobStatus = job.is_finished
+            if jobStatus:
+                db.session.delete(jobDB)
+                db.session.commit()
+                return False
             return True
-    if (role == "worker"):
-        if (os.path.isfile("provision/" + str(client_id) + ".worker.lockfile")):
+    elif (role == "worker"):
+        jobDB = models.Jobs.query.filter_by(client_id=client_id,role="worker").first()
+        if jobDB:
+            job = q.fetch_job(jobDB.job_key)
+            if job.is_finished():
+                db.session.delete(jobDB)
+                db.session.commit()
+                return False
             return True
+
     return False
-
-
-def build_client(client):
-    if check_status(client.id) is True:
-        return False
-
-    hypervisorIP = models.Hypervisors.query.get(client.hyperv_id).IP
-    lastVid = models.Nodes.query.order_by(models.Nodes.vid.desc()).filter_by(active=True).first()
-    if lastVid is None:
-        vid = 200
-    else:
-        vid = lastVid.vid + 1
-
-    lastInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).filter_by(active=True).first()
-    if lastInterface is None:
-        inter = "vmbr10"
-    else:
-        inter = str(lastInterface.net)
-        interid = re.split('(\d+)', inter)
-        inter = "vmbr" + str(int(interid[1]) + 1)
-
-    app.logger.info("Building: all for newclient " + client.name)
-    arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r all -n " + hypervisorIP + " -i " + inter
-    subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/provision/")
-    # Due to the nature of the database model, we need to insert basic information about nodes here.
-    # They will be updated with ip address upon creation
-    addDatabase = models.Nodes(client_id=client.id, type="database", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
-    addControl  = models.Nodes(client_id=client.id, type="control", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid + 1)
-    addWorker   = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid + 2)
-    db.session.add(addDatabase)
-    db.session.add(addControl)
-    db.session.add(addWorker)
-    db.session.commit()
-
-    return True
-
-
-def build_worker_local(client):
-    if check_status(client.id) is True:
-        return False
-    hypervisorIP = models.Hypervisors.query.get(client.hyperv_id).IP
-    lastVid = models.Nodes.query.order_by(models.Nodes.vid.desc()).filter_by(active=True).first()
-    if lastVid is None:
-        vid = 200
-    else:
-        vid = lastVid.vid + 1
-
-    clientInterface = models.Nodes.query.order_by(models.Nodes.net.desc()).filter(models.Nodes.client_id == client.id).first()
-    inter = str(clientInterface.net)
-
-    app.logger.info("Building: worker for newclient " + client.name)
-    arguments = "-c " + client.name + " -b " + str(client.id) + " -v " + str(vid) + " -r worker -n " + hypervisorIP + " -i " + inter
-    subprocess.Popen(["bash wrapper.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/provision/")
-
-    addWorker = models.Nodes(client_id=client.id, type="worker", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=inter, vid=vid)
-    db.session.add(addWorker)
-    db.session.commit()
-
-    return True
-
-
-def build_worker_digiocean(client, key):
-    app.logger.info("build_client_digiocean " + str(client.id) + key)
-    return True
-
-
-def build_worker_aws(client, key):
-    app.logger.info("build_client_aws " + str(client.id) + key)
-
-    return True
-
 
 def test_function():
     app.logger.info("Testing Queue")
+    job = get_current_job()
+    job.meta["client"] = 1
+    print job.meta
+    time.sleep(200)
     return True
 
 
 @app.route('/testqueue')
 def testqueue():
-    rawr = models.Clients.query.get(1)
-    client = ClientClass(rawr)
-    client.build_base()
-    return "RAWR"
+    queued_jobs = q.job_ids
+    newjob = q.fetch_job(queued_jobs[0])
+    print newjob.id
+    newjob.meta['client'] = "1"
+    newjob.meta['progress'] = "sysprep"
+    newjob.meta['role'] = "all"
+    newjob.save()
+    return newjob.meta['client']
