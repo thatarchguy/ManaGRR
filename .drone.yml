@@ -1,5 +1,6 @@
 image: python2.7
 script: 
+  - export DEBIAN_FRONTEND=noninteractive
   - sudo apt-get update
   - sudo apt-get -y install libguestfs-tools sqlite3 python-pip python-dev build-essential
   - pip install -r requirements.txt
