@@ -1,11 +1,9 @@
 image: python2.7
 script: 
-  - export DEBIAN_FRONTEND=noninteractive
-  - sudo apt-get update
-  - sudo apt-get -y install config-package-dev
-  - sudo apt-get -y --option Dpkg::Options=--force-confold install libguestfs-tools sqlite3 python-pip python-dev build-essential
-  - config-package-dev libguestfs-tools
-  - update-guestfs-appliance
+  - sudo apt-get -y install sqlite3 python-pip python-dev build-essential
+  - touch /tmp/bin/virt_sysprep && touch /tmp/bin/virt_copy_in
+  - chmod +x /tmp/bin/virt_sysprep && chmod +x /tmp/bin/virt_copy_in
+  - PATH=$PATH:/tmp/bin/
   - pip install -r requirements.txt
   - python manage.py test
 notify:
