@@ -2,7 +2,10 @@ image: python2.7
 script: 
   - export DEBIAN_FRONTEND=noninteractive
   - sudo apt-get update
-  - sudo apt-get -y install libguestfs-tools sqlite3 python-pip python-dev build-essential
+  - sudo apt-get -y install config-package-dev
+  - sudo apt-get -y --option Dpkg::Options=--force-confold install libguestfs-tools sqlite3 python-pip python-dev build-essential
+  - config-package-dev libguestfs-tools
+  - update-guestfs-appliance
   - pip install -r requirements.txt
   - python manage.py test
 notify:
