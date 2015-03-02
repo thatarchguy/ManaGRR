@@ -3,6 +3,7 @@ python:
   - "2.7"
 # command to install dependencies
 before_install:
+    - mkdir /tmp/bin
     - touch /tmp/bin/virt_sysprep && touch /tmp/bin/virt_copy_in
     - chmod +x /tmp/bin/virt_sysprep && chmod +x /tmp/bin/virt_copy_in
     - PATH=$PATH:/tmp/bin/

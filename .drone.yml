@@ -1,6 +1,7 @@
 image: python2.7
 script: 
   - sudo apt-get -y install sqlite3 python-pip python-dev build-essential
+  - mkdir /tmp/bin
   - touch /tmp/bin/virt_sysprep && touch /tmp/bin/virt_copy_in
   - chmod +x /tmp/bin/virt_sysprep && chmod +x /tmp/bin/virt_copy_in
   - PATH=$PATH:/tmp/bin/
