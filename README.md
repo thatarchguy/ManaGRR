@@ -26,9 +26,9 @@ Get ssh keys installed for a root user on the proxmox server.
 This application ssh's into the server to provision VM's.
 
 Mount the proxmox shares locally. 
-Currently I'm using my NAS as storage for proxmox, so I just mounted the shares on my filesystem as /mnt/virt/ .
+Currently I'm using my NAS as storage for proxmox, so I just mounted the shares on my filesystem as /mnt/proxmox/ .
 
-You will have to edit app/provision/proxmox.sh to fit your layout.
+You may have to edit app/provision/provision.py to fit your layout.
 
 
 #### Create Base image for roles
