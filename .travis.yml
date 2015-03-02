@@ -2,6 +2,8 @@ language: python
 python:
   - "2.7"
 # command to install dependencies
+before_install:
+    - sudo apt-get install -y libguestfs-tools
 install: "pip install -r requirements.txt"
 # command to run tests
 script: python manage.py test
