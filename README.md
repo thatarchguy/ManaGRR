@@ -1,7 +1,10 @@
 ##grrmanager [![Issues in Ready](https://badge.waffle.io/thatarchguy/GRR-Manager.svg?label=ready&title=Ready)](http://waffle.io/thatarchguy/GRR-Manager) [![Build Status](https://travis-ci.org/thatarchguy/GRR-Manager.svg)](https://travis-ci.org/thatarchguy/GRR-Manager) 
 ----
-A framework for managing GRR clusters 
+A framework for creating and managing GRR clusters 
 
+Utilizes proxmox as the hypervisor.
+
+[Ideally done with Docker containers instead](https://github.com/google/grr/pull/124).
 ### Current build
 ---
 Currently in heavy development
@@ -55,7 +58,7 @@ Docker, Vagrant, or virtualenv
 
 ```
 # Install deps
-python manage.py install
+pip install -r requirements.txt
 
 # Create the sqlite database
 python manage.py createdb
@@ -71,6 +74,9 @@ python manage.py runserver --host=0.0.0.0
 
 # Run a python shell in the program's context
 python manage.py shell
+
+# Start a worker
+python worker.py
 ```
 
 
