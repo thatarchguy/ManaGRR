@@ -1,4 +1,4 @@
-##grrmanager [![Issues in Ready](https://badge.waffle.io/thatarchguy/GRR-Manager.svg?label=ready&title=Ready)](http://waffle.io/thatarchguy/GRR-Manager) [![Build Status](https://travis-ci.org/thatarchguy/GRR-Manager.svg)](https://travis-ci.org/thatarchguy/GRR-Manager) 
+##grrmanager ![python 2.7](http://b.repl.ca/v1/python-2.7-blue.png) [![Issues in Ready](https://badge.waffle.io/thatarchguy/GRR-Manager.svg?label=ready&title=Ready)](http://waffle.io/thatarchguy/GRR-Manager) [![Build Status](https://travis-ci.org/thatarchguy/GRR-Manager.svg)](https://travis-ci.org/thatarchguy/GRR-Manager) 
 ----
 A framework for creating and managing GRR clusters 
 
