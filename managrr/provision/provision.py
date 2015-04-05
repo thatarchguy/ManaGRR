@@ -36,7 +36,7 @@ class ClientClass:
             inter = str(lastInterface.net)
             interid = re.split('(\d+)', inter)
             self.inter = "vmbr" + str(int(interid[1]) + 1)
-        
+        """
         app.logger.info("Sysprepping " + self.client.name + ": DB")
         job.meta["progress"] = "sysprep"
         job.save()
@@ -98,7 +98,7 @@ class ClientClass:
 
         job.meta["progress"] = "installing"
         job.save()
-
+        """
         # Add to database
         addDatabase = models.Nodes(client_id=self.client.id, type="database", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=self.inter, vid=self.vid)
         addControl  = models.Nodes(client_id=self.client.id, type="control", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=self.inter, vid=self.vid + 1)

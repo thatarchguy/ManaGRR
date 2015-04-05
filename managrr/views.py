@@ -387,6 +387,10 @@ def client_status(client_id):
 @app.route('/api/nodes/history')
 @login_required
 def node_history():
+    """
+    Gathers the previous 5 months, and counts the amount
+    of nodes that were active during that month.
+    """
     prevMonth = []
     results = []
     nodes = models.Nodes.query.all()
@@ -401,13 +405,15 @@ def node_history():
         d['count']  = 0
         for node in nodes:
             nodeDateAdd = datetime.datetime.strptime(node.date_added, "%Y-%m-%d %H:%M:%S")
-            if node.date_rm is not None:
-                nodeDateRm  = datetime.datetime.strptime(node.date_rm, "%Y-%m-%d %H:%M:%S")
-                nodeRmFormat  = nodeDateRm.strftime("%Y%m")
             nodeAddFormat = nodeDateAdd.strftime("%Y%m")
             if nodeAddFormat < monthFormat:
-                if nodeRmFormat > monthFormat or node.date_rm is None:
+                if node.date_rm is None:
                     d['count'] += 1
+                if node.date_rm is not None:
+                    nodeDateRm  = datetime.datetime.strptime(node.date_rm, "%Y-%m-%d %H:%M:%S")
+                    nodeRmFormat  = nodeDateRm.strftime("%Y%m")
+                    if nodeRmFormat > monthFormat:
+                        d['count'] += 1
             elif nodeAddFormat == monthFormat:
                     d['count'] += 1
         results.insert(0, d)
