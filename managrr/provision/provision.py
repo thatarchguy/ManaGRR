@@ -36,7 +36,6 @@ class ClientClass:
             inter = str(lastInterface.net)
             interid = re.split('(\d+)', inter)
             self.inter = "vmbr" + str(int(interid[1]) + 1)
-        """
         app.logger.info("Sysprepping " + self.client.name + ": DB")
         job.meta["progress"] = "sysprep"
         job.save()
@@ -98,7 +97,6 @@ class ClientClass:
 
         job.meta["progress"] = "installing"
         job.save()
-        """
         # Add to database
         addDatabase = models.Nodes(client_id=self.client.id, type="database", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=self.inter, vid=self.vid)
         addControl  = models.Nodes(client_id=self.client.id, type="control", date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), location="proxmox", IP="0.0.0.0", net=self.inter, vid=self.vid + 1)
@@ -164,3 +162,45 @@ class ClientClass:
 
         return True
 
+
+    def delete_client(self):
+        app.logger.info("Deleting: " + str(self.client.id))
+
+        nodes           = models.Nodes.query.filter_by(client_id=self.client.id)
+        keys            = models.Keys.query.filter_by(client_id=self.client.id).first()
+
+        for node in nodes:
+            if node.active is not False:
+                node.active = False
+                node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                db.session.add(node)
+                # SSH into server to stop & delete vm
+                ssh("root@" + self.hypervisorIP, "qm stop " + node.vid + " && qm destroy " + node.vid + " --skiplock")
+                ssh("root@" + self.hypervisorIP, "rm -rf /mnt/pve/virt/images/" + node.vid)
+                if node.type == "control":
+                    ssh("root@" + self.hypervisorIP, "sed -i '/" + node.net + "/, +4d' /etc/network/interfaces && service networking restart") 
+
+        self.client.active = False
+        self.client.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        db.session.add(self.client)
+        db.session.delete(keys)
+        db.session.commit()
+        app.logger.info("Deleted client: " + self.client.id)
+        
+        return True
+
+
+    def delete_node(self, node):
+        app.logger.info("Deleting node for: " + str(self.client.id))
+        
+        node.active = False
+        node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        db.session.add(node)
+
+        ssh("root@" + self.hypervisorIP, "qm stop " + node.vid + " && qm destroy " + node.vid + " --skiplock")
+        ssh("root@" + self.hypervisorIP, "rm -rf /mnt/pve/virt/images/" + node.vid)
+
+        db.session.commit()
+        app.logger.info("Deleted node: " + str(node.id) + " " + node.type)
+
+        return True

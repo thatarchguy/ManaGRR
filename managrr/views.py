@@ -174,28 +174,13 @@ def client_admin(client_id, new_client=False):
 @login_required
 def client_delete(client_id):
     client  = models.Clients.query.get(client_id)
-    nodes   = models.Nodes.query.filter_by(client_id=client.id)
-    keys    = models.Keys.query.filter_by(client_id=client.id).first()
-    hypervisorIP    = models.Hypervisors.query.get(client.hyperv_id).IP
 
     if client.active is False:
         return redirect(url_for('index.view'))
 
-    for node in nodes:
-        if node.active is not False:
-            node.active = False
-            node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            db.session.add(node)
-            arguments = "-v " + str(node.vid) + " -r " + node.type + " -n " + hypervisorIP + " -i " + node.net
-            subprocess.Popen(["bash delete.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/provision/")
-
-    client.active = False
-    client.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    db.session.add(client)
-    db.session.delete(keys)
-    db.session.commit()
-    app.logger.info("Deleted client: " + client.name)
-
+    clientObj = ClientClass(client)
+    clientObj.delete_client()
+    
     return redirect(url_for('index_view'))
 
 
@@ -330,17 +315,10 @@ def node_delete(node_id):
     node  = models.Nodes.query.get(node_id)
     if node.active is False:
         return "1"
-
+    
     client  = models.Clients.query.get(node.client_id)
-    hypervisorIP    = models.Hypervisors.query.get(client.hyperv_id).IP
-
-    node.active = False
-    node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    db.session.add(node)
-    arguments = "-v " + str(node.vid) + " -r " + node.type + " -n " + hypervisorIP + " -i " + node.net
-    subprocess.Popen(["bash delete.sh " + arguments], shell=True, executable="/bin/bash", cwd=os.getcwd() + "/provision/")
-    db.session.commit()
-    app.logger.info("Deleted node: " + str(node.id) + " " + node.type)
+    clientObj = ClientClass(client)
+    clientObj.delete_node(node)
     return "1"
 
 
