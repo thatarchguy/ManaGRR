@@ -277,6 +277,9 @@ def node_create(client=None, role=None, location=None):
             app.logger.info("ClientKey Added: " + str(client.id) + "," + client.name + "," + location)
             db.session.commit()
             job = q.enqueue(clientObj.build_worker_aws, client, key)
+            jobDB = models.Jobs(client_id=client.id, job_key=job.id)
+            db.session.add(jobDB)
+            db.session.commit()
         elif location == "digiocean":
             key = digiocean
             clientKey = models.Keys.query.filter_by(client_id=client.id).first()
@@ -284,8 +287,15 @@ def node_create(client=None, role=None, location=None):
             app.logger.info("ClientKey Added: " + str(client.id) + "," + client.name + "," + location)
             db.session.commit()
             job = q.enqueue(clientObj.build_worker_digiocean, client, key)
+            jobDB = models.Jobs(client_id=client.id, job_key=job.id)
+            db.session.add(jobDB)
+            db.session.commit()
         elif location == "proxmox":
             job = q.enqueue(clientObj.build_worker_local, timeout=300)
+            jobDB = models.Jobs(client_id=client.id, job_key=job.id)
+            db.session.add(jobDB)
+            db.session.commit()
+
         else:
             return "0"
     # This part is not necessary, functions can directly call the build_worker_* functions.
@@ -351,6 +361,7 @@ def client_status(client_id):
     jobDB = models.Jobs.query.filter_by(client_id=client_id).first()
     if jobDB:
         job = q.fetch_job(jobDB.job_key)
+        # Uses custom meta tags on python-rq jobs to get status
         if str(job.meta['progress']) == "sysprep":
             percent = "30"
         elif str(job.meta['progress']) == "proxmox":
