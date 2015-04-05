@@ -175,8 +175,8 @@ class ClientClass:
                 node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 db.session.add(node)
                 # SSH into server to stop & delete vm
-                ssh("root@" + self.hypervisorIP, "qm stop " + node.vid + " && qm destroy " + node.vid + " --skiplock")
-                ssh("root@" + self.hypervisorIP, "rm -rf /mnt/pve/virt/images/" + node.vid)
+                ssh("root@" + self.hypervisorIP, "qm stop " + str(node.vid) + " && qm destroy " + str(node.vid) + " --skiplock")
+                ssh("root@" + self.hypervisorIP, "rm -rf /mnt/pve/virt/images/" + str(node.vid))
                 if node.type == "control":
                     ssh("root@" + self.hypervisorIP, "sed -i '/" + node.net + "/, +4d' /etc/network/interfaces && service networking restart") 
 
@@ -185,7 +185,7 @@ class ClientClass:
         db.session.add(self.client)
         db.session.delete(keys)
         db.session.commit()
-        app.logger.info("Deleted client: " + self.client.id)
+        app.logger.info("Deleted client: " + str(self.client.id))
         
         return True
 
@@ -197,8 +197,8 @@ class ClientClass:
         node.date_rm = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         db.session.add(node)
 
-        ssh("root@" + self.hypervisorIP, "qm stop " + node.vid + " && qm destroy " + node.vid + " --skiplock")
-        ssh("root@" + self.hypervisorIP, "rm -rf /mnt/pve/virt/images/" + node.vid)
+        ssh("root@" + self.hypervisorIP, "qm stop " + str(node.vid) + " && qm destroy " + str(node.vid) + " --skiplock")
+        ssh("root@" + self.hypervisorIP, "rm -rf /mnt/pve/virt/images/" + str(node.vid))
 
         db.session.commit()
         app.logger.info("Deleted node: " + str(node.id) + " " + node.type)
