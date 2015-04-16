@@ -77,4 +77,9 @@ python worker.py
 ```
 
 
-
+## Screenshots
+![ManaGRR Dashboard](docs/images/ManaGRR_Dash.png?raw=true)
+![ManaGRR ClientAdmin](docs/images/ManaGRR_ClientAdmin.png?raw=true)
+![ManaGRR AddClient](docs/images/ManaGRR_AddClient.png?raw=true)
+![ManaGRR ClientList](docs/images/ManaGRR_ClientList.png?raw=true)
+![ManaGRR HyperList](docs/images/ManaGRR_HyperList.png?raw=true)
