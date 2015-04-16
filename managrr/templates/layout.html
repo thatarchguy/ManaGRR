@@ -1,7 +1,6 @@
 
 {% include "head.html" %}
 <body>
-
     <div id="wrapper">
 
         <!-- Navigation -->
@@ -19,11 +18,16 @@
 
             <ul class="nav navbar-top-links navbar-right">
                 <li class="dropdown">
+                    {% with messages = get_flashed_messages() %}
                     <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                    <div class="icon-wrapper">
                         <i class="fa fa-envelope fa-fw"></i>  <i class="fa fa-caret-down"></i>
+                    {% if messages %}
+                    <span class="badge">{{ messages|length }}</span>
+                    {% endif %}
+                    </div>
                     </a>
                     <ul class="dropdown-menu dropdown-messages">
-                        {% with messages = get_flashed_messages() %}
                             {% if messages %}
                             <ul class=flashes>
                             {% for message in messages %}
@@ -62,12 +66,12 @@
                         <i class="fa fa-user fa-fw"></i>  <i class="fa fa-caret-down"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-user">
-                        <li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
+                        <li><a href="#"><i class="fa fa-user fa-fw"></i> {{ current_user.username }}</a>
                         </li>
-                        <li><a href="#"><i class="fa fa-gear fa-fw"></i> Settings</a>
+                        <li><a href="/settings"><i class="fa fa-gear fa-fw"></i> Settings</a>
                         </li>
                         <li class="divider"></li>
-                        <li><a href="logout"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
+                        <li><a href="/logout"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
                         </li>
                     </ul>
                     <!-- /.dropdown-user -->
@@ -146,6 +150,13 @@
     <!-- /#wrapper -->
 
 {% include "scripts.html" %}
+
+{#  This used to be in scripts.html but apparently nested blocks 
+    don't work anymore...
+#}
+
+{% block scripts %}
+{% endblock %}
 
 </body>
 

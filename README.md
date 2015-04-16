@@ -1,7 +1,10 @@
-##grrmanager [![Issues in Ready](https://badge.waffle.io/thatarchguy/GRR-Manager.svg?label=ready&title=Ready)](http://waffle.io/thatarchguy/GRR-Manager) [![Build Status](https://travis-ci.org/thatarchguy/GRR-Manager.svg)](https://travis-ci.org/thatarchguy/GRR-Manager) 
+##ManaGRR ![python 2.7](http://b.repl.ca/v1/python-2.7-blue.png) [![Issues in Ready](https://badge.waffle.io/thatarchguy/GRR-Manager.svg?label=ready&title=Ready)](http://waffle.io/thatarchguy/GRR-Manager) [![Build Status](https://travis-ci.org/thatarchguy/GRR-Manager.svg)](https://travis-ci.org/thatarchguy/GRR-Manager) 
 ----
-A framework for managing GRR clusters 
+A framework for creating and managing GRR clusters 
 
+Utilizes proxmox as the hypervisor.
+
+[Ideally done with Docker containers instead](https://github.com/google/grr/pull/124).
 ### Current build
 ---
 Currently in heavy development
@@ -26,22 +29,21 @@ Get ssh keys installed for a root user on the proxmox server.
 This application ssh's into the server to provision VM's.
 
 Mount the proxmox shares locally. 
-Currently I'm using my NAS as storage for proxmox, so I just mounted the shares on my filesystem as /mnt/virt/ .
+Currently I'm using my NAS as storage for proxmox, so I just mounted the shares on my filesystem as /mnt/proxmox/ .
 
-You will have to edit app/provision/proxmox.sh to fit your layout.
+You may have to edit app/provision/provision.py to fit your layout.
 
 
 #### Create Base image for roles
-Go into the app/provision folder and create a packer image. 
+Go into the managrr/provision folder and create a packer image. 
 The template .json file should be a fine start. Check the seedfile in httpdir as well
 ```
 packer build qemu-ubuntu15.json
 ```
 
-You can test the individual scripts to make sure they run properly.
+You can test the individual legacy scripts to make sure they run properly.
 
 sysprep.sh then proxmox.sh
-
 
 Once this is all verified worked, then run the application.
 
@@ -55,9 +57,11 @@ Docker, Vagrant, or virtualenv
 
 ```
 # Install deps
-python manage.py install
+pip install -r requirements.txt
 
 # Create the sqlite database
+python manage.py createdb
+# OR
 python manage.py db init
 python manage.py db migrate
 python manage.py db upgrade
@@ -65,10 +69,11 @@ python manage.py db upgrade
 # Run the program in server mode
 python manage.py runserver --host=0.0.0.0
 
-# or
-
 # Run a python shell in the program's context
 python manage.py shell
+
+# Start a worker (needed to provision)
+python worker.py
 ```
 
 

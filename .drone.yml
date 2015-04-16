@@ -1,9 +1,21 @@
 image: python2.7
 script: 
-  - sudo apt-get -y install sqlite3 python-pip python-dev build-essential 1> /dev/null 2> /dev/null
+  - sudo apt-get -y install sqlite3 python-pip python-dev build-essential
+  - mkdir /tmp/bin
+  - touch /tmp/bin/virt_sysprep && touch /tmp/bin/virt_copy_in
+  - chmod +x /tmp/bin/virt_sysprep && chmod +x /tmp/bin/virt_copy_in
+  - PATH=$PATH:/tmp/bin/
   - pip install -r requirements.txt
   - python manage.py test
 notify:
   email:
     recipients:
       - kevin@stealsyour.pw
+  irc:
+    channel: managrr-dev 
+    nick: ManagrrBot 
+    server: "irc.freenode.net:6667"
+    on_started: true
+    on_success: true
+    on_failure: true
+

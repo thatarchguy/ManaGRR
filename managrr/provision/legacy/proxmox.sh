@@ -136,9 +136,9 @@ elif [[ $ROLE =~ "all" ]]; then
     newint
     DB
     VID=$(($VID+1))
-    worker
+    control
     VID=$(($VID+1))
-    control 
+    worker
 else
     usage
     exit 1

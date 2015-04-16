@@ -20,16 +20,16 @@
 {% block content %}
 
 <div class="row">
-    <div class="col-lg-6">
+    <div class="col-lg-6 col-md-offset-3">
         <div class="panel panel-default">
             <div class="panel-heading">
                 Add Hypervisor
             </div>
             <div class="panel-body">
-                <form method="POST">
+                <form method="POST" class="form-horizontal">
                     {{ AddHyperForm.hidden_tag() }}
                     <div class="form-group">
-                        <label for="location">Hypervisor Location: </label>
+                        <label for="location" class="">Hypervisor Location: </label>
                         {{ AddHyperForm.location }}<span style="color: red;">*</span>
                         {% for error in AddHyperForm.location.errors %}
                             <br /><span style="color: red;">[{{error}}]</span>
@@ -37,7 +37,7 @@
 
                     </div>
                     <div class="form-group">
-                        <label for="ip">Hypervisor IP:</label>
+                        <label for="ip" class="">Hypervisor IP:</label>
                         {{ AddHyperForm.ip }}<span style="color: red;">*</span>
                         {% for error in AddHyperForm.ip.errors %}
                             <br /><span style="color: red;">[{{error}}]</span>
@@ -49,16 +49,7 @@
             </div>
         </div>
     </div>
-
-
-
-
-
 </div>
-
-
-
-
 {% endblock %}
 
 
