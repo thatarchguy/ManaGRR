@@ -43,12 +43,12 @@ def index_view():
 
     # SQLAlchemy to get total clients
     clientCount = models.Clients.query.filter_by(active=True).count()
-    hyperCount   = models.Hypervisors.query.count()
+    hyperCount = models.Hypervisors.query.count()
 
     return render_template('index.html',
-                            title="Dashboard",
-                            clientCount=clientCount,
-                            hyperCount=hyperCount)
+                           title="Dashboard",
+                           clientCount=clientCount,
+                           hyperCount=hyperCount)
 
 
 """
@@ -76,7 +76,8 @@ def login_view():
     if 'remember_me' in request.form:
         remember_me = True
     registered_user = models.Users.query.filter_by(username=username).first()
-    if registered_user and bcrypt.check_password_hash(registered_user.password, password):
+    if registered_user and bcrypt.check_password_hash(registered_user.password,
+                                                      password):
         login_user(registered_user, remember=remember_me)
         flash('%s logged in successfully' % username)
         return redirect(request.args.get('next') or url_for('index_view'))
@@ -97,7 +98,9 @@ def hypervisors_view():
 
     hypervisors = models.Hypervisors.query.all()
 
-    return render_template('hypervisors.html', title="Hypervisors", entries=hypervisors)
+    return render_template('hypervisors.html',
+                           title="Hypervisors",
+                           entries=hypervisors)
 
 
 @app.route('/hypervisors/add', methods=['POST', 'GET'])
@@ -106,8 +109,11 @@ def hypervisor_add():
     error = None
     AddHyperForm = AddHyper()
     if AddHyperForm.validate_on_submit():
-        if models.Hypervisors.query.filter_by(IP=AddHyperForm.ip.data).first() is None:
-            newHypervisor = models.Hypervisors(location=AddHyperForm.location.data, IP=AddHyperForm.ip.data)
+        if models.Hypervisors.query.filter_by(
+            IP=AddHyperForm.ip.data).first() is None:
+            newHypervisor = models.Hypervisors(
+                location=AddHyperForm.location.data,
+                IP=AddHyperForm.ip.data)
             db.session.add(newHypervisor)
             db.session.commit()
             hypervisor_check(newHypervisor.id)
@@ -115,7 +121,10 @@ def hypervisor_add():
         else:
             error = "Client IP is already in use"
 
-    return render_template('addhyper.html', title="Add Hypervisor", AddHyperForm=AddHyperForm, error=error)
+    return render_template('addhyper.html',
+                           title="Add Hypervisor",
+                           AddHyperForm=AddHyperForm,
+                           error=error)
 
 
 @app.route('/hypervisor/<int:hyperid>/check')
@@ -140,9 +149,12 @@ def hypervisor_check(hyperid):
 def clients_view():
 
     clients = models.Clients.query.filter_by(active=True).all()
-    hyperCount   = models.Hypervisors.query.count()
+    hyperCount = models.Hypervisors.query.count()
 
-    return render_template('clients.html', title="Clients", entries=clients, hyperCount=hyperCount)
+    return render_template('clients.html',
+                           title="Clients",
+                           entries=clients,
+                           hyperCount=hyperCount)
 
 
 @app.route('/client/<int:client_id>/admin/')
@@ -150,37 +162,37 @@ def clients_view():
 def client_admin(client_id, new_client=False):
     new_client = request.args.get('new_client')
     new_worker = request.args.get('new_worker')
-    client  = models.Clients.query.get(client_id)
-    nodes   = client.nodes.filter_by(active=True).all()
+    client = models.Clients.query.get(client_id)
+    nodes = client.nodes.filter_by(active=True).all()
     digikey = models.Keys.query.filter_by(client_id=client_id).first().digiocean
-    awskey  = models.Keys.query.filter_by(client_id=client_id).first().aws
-    hypervisorIP    = models.Hypervisors.query.get(client.hyperv_id).IP
-    CreateNodeForm  = CreateNode(digiocean=digikey, aws=awskey)
+    awskey = models.Keys.query.filter_by(client_id=client_id).first().aws
+    hypervisorIP = models.Hypervisors.query.get(client.hyperv_id).IP
+    CreateNodeForm = CreateNode(digiocean=digikey, aws=awskey)
     if (new_client == None):  # noqa
         new_client = check_status(client.id)
     if (new_worker == None):  # noqa
         new_worker = check_status(client.id, "worker")
     return render_template('clientadmin.html',
-                            title=client.name,
-                            client=client,
-                            nodes=nodes,
-                            CreateNodeForm=CreateNodeForm,
-                            new_client=new_client,
-                            new_worker=new_worker,
-                            hypervisorIP=hypervisorIP)
+                           title=client.name,
+                           client=client,
+                           nodes=nodes,
+                           CreateNodeForm=CreateNodeForm,
+                           new_client=new_client,
+                           new_worker=new_worker,
+                           hypervisorIP=hypervisorIP)
 
 
 @app.route('/client/<int:client_id>/delete/')
 @login_required
 def client_delete(client_id):
-    client  = models.Clients.query.get(client_id)
+    client = models.Clients.query.get(client_id)
 
     if client.active is False:
         return redirect(url_for('index.view'))
 
     clientObj = ClientClass(client)
     clientObj.delete_client()
-    
+
     return redirect(url_for('index_view'))
 
 
@@ -221,27 +233,41 @@ def client_edit(client_id):
 def client_add():
     error = None
     AddClientForm = AddClient()
-    AddClientForm.hyperv.choices = [(a.IP, a.IP) for a in models.Hypervisors.query.order_by('IP')]
+    AddClientForm.hyperv.choices = [
+        (a.IP, a.IP) for a in models.Hypervisors.query.order_by('IP')
+    ]
     if AddClientForm.validate_on_submit():
-        if models.Clients.query.filter_by(name=AddClientForm.name.data).first() is None:
-            newClient = models.Clients(name=AddClientForm.name.data, date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                        phone=AddClientForm.phone.data, email=AddClientForm.email.data, size=AddClientForm.size.data)
+        if models.Clients.query.filter_by(
+            name=AddClientForm.name.data).first() is None:
+            newClient = models.Clients(
+                name=AddClientForm.name.data,
+                date_added=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                phone=AddClientForm.phone.data,
+                email=AddClientForm.email.data,
+                size=AddClientForm.size.data)
 
-            hypervisor = models.Hypervisors.query.filter_by(IP=AddClientForm.hyperv.data).first()
+            hypervisor = models.Hypervisors.query.filter_by(
+                IP=AddClientForm.hyperv.data).first()
             newClient.hyperv_id = hypervisor.id
             db.session.add(newClient)
 
             db.session.commit()
-            clientKeys = models.Keys(aws=AddClientForm.aws.data, digiocean=AddClientForm.digitalOcean.data, ssh=AddClientForm.ssh.data, client_id=newClient.id)
+            clientKeys = models.Keys(aws=AddClientForm.aws.data,
+                                     digiocean=AddClientForm.digitalOcean.data,
+                                     ssh=AddClientForm.ssh.data,
+                                     client_id=newClient.id)
             db.session.add(clientKeys)
             db.session.commit()
 
             if AddClientForm.aws.data != "":
-                app.logger.info("ClientKey Added: [NEWCLIENT]" + str(newClient.id) + "," + newClient.name + ",aws")
+                app.logger.info("ClientKey Added: [NEWCLIENT]" + str(
+                    newClient.id) + "," + newClient.name + ",aws")
             if AddClientForm.digitalOcean.data != "":
-                app.logger.info("ClientKey Added: [NEWCLIENT]" + str(newClient.id) + "," + newClient.name + ",digiocean")
+                app.logger.info("ClientKey Added: [NEWCLIENT]" + str(
+                    newClient.id) + "," + newClient.name + ",digiocean")
             if AddClientForm.ssh.data != "":
-                app.logger.info("ClientKey Added: [NEWCLIENT]" + str(newClient.id) + "," + newClient.name + ",ssh")
+                app.logger.info("ClientKey Added: [NEWCLIENT]" + str(
+                    newClient.id) + "," + newClient.name + ",ssh")
 
             client = models.Clients.query.get(newClient.id)
             clientObj = ClientClass(client)
@@ -250,11 +276,16 @@ def client_add():
             db.session.add(jobDB)
             db.session.commit()
 
-            return redirect(url_for('client_admin', client_id=newClient.id, new_client=True))
+            return redirect(url_for('client_admin',
+                                    client_id=newClient.id,
+                                    new_client=True))
         else:
             error = "Client Name is already in use"
 
-    return render_template('addclient.html', title='Add Client', AddClientForm=AddClientForm, error=error)
+    return render_template('addclient.html',
+                           title='Add Client',
+                           AddClientForm=AddClientForm,
+                           error=error)
 
 
 # This function is only for creating workers
@@ -263,18 +294,19 @@ def client_add():
 @login_required
 def node_create(client=None, role=None, location=None):
     if request.method == 'POST':
-        clientName  = request.form['client']
-        location    = request.form['location']
-        digiocean   = request.form['digiocean']
-        aws         = request.form['aws']
-    # This function was tested in python CLI. Seems to work.
+        clientName = request.form['client']
+        location = request.form['location']
+        digiocean = request.form['digiocean']
+        aws = request.form['aws']
+        # This function was tested in python CLI. Seems to work.
         client = models.Clients.query.filter_by(name=clientName).first()
         clientObj = ClientClass(client)
         if location == "aws":
             key = aws
             clientKey = models.Keys.query.filter_by(client_id=client.id).first()
             clientKey.aws = key
-            app.logger.info("ClientKey Added: " + str(client.id) + "," + client.name + "," + location)
+            app.logger.info("ClientKey Added: " + str(client.id) + "," +
+                            client.name + "," + location)
             db.session.commit()
             job = q.enqueue(clientObj.build_worker_aws, client, key)
             jobDB = models.Jobs(client_id=client.id, job_key=job.id)
@@ -284,7 +316,8 @@ def node_create(client=None, role=None, location=None):
             key = digiocean
             clientKey = models.Keys.query.filter_by(client_id=client.id).first()
             clientKey.digiocean = key
-            app.logger.info("ClientKey Added: " + str(client.id) + "," + client.name + "," + location)
+            app.logger.info("ClientKey Added: " + str(client.id) + "," +
+                            client.name + "," + location)
             db.session.commit()
             job = q.enqueue(clientObj.build_worker_digiocean, client, key)
             jobDB = models.Jobs(client_id=client.id, job_key=job.id)
@@ -301,10 +334,10 @@ def node_create(client=None, role=None, location=None):
     # This part is not necessary, functions can directly call the build_worker_* functions.
     # I just wanted a central place to call the functions from that wasn't a web request
     elif client is not None:
-        role        = role
-        location    = location
+        role = role
+        location = location
         if location == "aws":
-            key  = models.Keys.query.get(client.id).aws
+            key = models.Keys.query.get(client.id).aws
             build_worker_aws(client, key)
         elif location == "digiocean":
             key = models.Keys.query.get(client.id).digiocean
@@ -322,11 +355,11 @@ def node_create(client=None, role=None, location=None):
 @login_required
 def node_delete(node_id):
 
-    node  = models.Nodes.query.get(node_id)
+    node = models.Nodes.query.get(node_id)
     if node.active is False:
         return "1"
-    
-    client  = models.Clients.query.get(node.client_id)
+
+    client = models.Clients.query.get(node.client_id)
     clientObj = ClientClass(client)
     clientObj.delete_node(node)
     return "1"
@@ -335,15 +368,17 @@ def node_delete(node_id):
 @app.route('/api/nodes/checkin/', methods=['GET'])
 @login_required
 def node_checkin():
-    clientName  = request.args.get('client')
-    role        = request.args.get('role')
-    ip          = request.args.get('ip')
+    clientName = request.args.get('client')
+    role = request.args.get('role')
+    ip = request.args.get('ip')
 
     # This function was tested in python CLI. Seems to work.
     clientID = models.Clients.query.filter_by(name=clientName).one().id
 
     # We only want the first one, right? Yeah? Ideally hm... This could mess up if cloud workers provision faster than proxmox workers.
-    node = models.Nodes.query.filter_by(client_id=clientID, type=role, IP='0.0.0.0').one()
+    node = models.Nodes.query.filter_by(client_id=clientID,
+                                        type=role,
+                                        IP='0.0.0.0').one()
     node.IP = ip
     db.session.commit()
     app.logger.info(clientName + " " + role + " " + ip + " Checked in")
@@ -390,21 +425,23 @@ def node_history():
     for month in prevMonth:
         monthFormat = month.strftime("%Y%m")
         d = dict()
-        d['month']  = month.strftime("%Y-%m")
-        d['count']  = 0
+        d['month'] = month.strftime("%Y-%m")
+        d['count'] = 0
         for node in nodes:
-            nodeDateAdd = datetime.datetime.strptime(node.date_added, "%Y-%m-%d %H:%M:%S")
+            nodeDateAdd = datetime.datetime.strptime(node.date_added,
+                                                     "%Y-%m-%d %H:%M:%S")
             nodeAddFormat = nodeDateAdd.strftime("%Y%m")
             if nodeAddFormat < monthFormat:
                 if node.date_rm is None:
                     d['count'] += 1
                 if node.date_rm is not None:
-                    nodeDateRm  = datetime.datetime.strptime(node.date_rm, "%Y-%m-%d %H:%M:%S")
-                    nodeRmFormat  = nodeDateRm.strftime("%Y%m")
+                    nodeDateRm = datetime.datetime.strptime(
+                        node.date_rm, "%Y-%m-%d %H:%M:%S")
+                    nodeRmFormat = nodeDateRm.strftime("%Y%m")
                     if nodeRmFormat > monthFormat:
                         d['count'] += 1
             elif nodeAddFormat == monthFormat:
-                    d['count'] += 1
+                d['count'] += 1
         results.insert(0, d)
 
     jsondumps = json.dumps(results, indent=4)
@@ -417,10 +454,10 @@ def node_history():
 def settings_view():
     error = None
     user = current_user
-    GeneralForm     = SettingsGeneral(email=user.email)
-    ChangePassForm  = SettingsPass()
+    GeneralForm = SettingsGeneral(email=user.email)
+    ChangePassForm = SettingsPass()
     if GeneralForm.validate_on_submit():
-        email       = request.form['email']
+        email = request.form['email']
         user.email = email
         db.session.add(user)
         db.session.commit()
@@ -439,7 +476,11 @@ def settings_view():
             return redirect('/settings')
         else:
             error = "Current password was incorrect"
-    return render_template('settings.html', title="Settings", ChangePassForm=ChangePassForm, GeneralForm=GeneralForm, error=error)
+    return render_template('settings.html',
+                           title="Settings",
+                           ChangePassForm=ChangePassForm,
+                           GeneralForm=GeneralForm,
+                           error=error)
 
 
 def check_status(client_id, role="all"):
@@ -454,7 +495,8 @@ def check_status(client_id, role="all"):
                 return False
             return True
     elif (role == "worker"):
-        jobDB = models.Jobs.query.filter_by(client_id=client_id,role="worker").first()
+        jobDB = models.Jobs.query.filter_by(client_id=client_id,
+                                            role="worker").first()
         if jobDB:
             job = q.fetch_job(jobDB.job_key)
             if job.is_finished():
@@ -464,6 +506,7 @@ def check_status(client_id, role="all"):
             return True
 
     return False
+
 
 def test_function():
     app.logger.info("Testing Queue")
