@@ -168,6 +168,8 @@ def client_admin(client_id, new_client=False):
     awskey = models.Keys.query.filter_by(client_id=client_id).first().aws
     hypervisorIP = models.Hypervisors.query.get(client.hyperv_id).IP
     CreateNodeForm = CreateNode(digiocean=digikey, aws=awskey)
+    ipaddr = (client.nodes.filter_by(type="control").first()).IP
+    # If not specified, check to make sure there isn't a job
     if (new_client == None):  # noqa
         new_client = check_status(client.id)
     if (new_worker == None):  # noqa
@@ -179,7 +181,8 @@ def client_admin(client_id, new_client=False):
                            CreateNodeForm=CreateNodeForm,
                            new_client=new_client,
                            new_worker=new_worker,
-                           hypervisorIP=hypervisorIP)
+                           hypervisorIP=hypervisorIP,
+                           ipaddr=ipaddr)
 
 
 @app.route('/client/<int:client_id>/delete/')
@@ -309,7 +312,7 @@ def node_create(client=None, role=None, location=None):
                             client.name + "," + location)
             db.session.commit()
             job = q.enqueue(clientObj.build_worker_aws, client, key)
-            jobDB = models.Jobs(client_id=client.id, job_key=job.id)
+            jobDB = models.Jobs(client_id=client.id, job_key=job.id, role="worker")
             db.session.add(jobDB)
             db.session.commit()
         elif location == "digiocean":
@@ -320,12 +323,12 @@ def node_create(client=None, role=None, location=None):
                             client.name + "," + location)
             db.session.commit()
             job = q.enqueue(clientObj.build_worker_digiocean, client, key)
-            jobDB = models.Jobs(client_id=client.id, job_key=job.id)
+            jobDB = models.Jobs(client_id=client.id, job_key=job.id, role="worker")
             db.session.add(jobDB)
             db.session.commit()
         elif location == "proxmox":
             job = q.enqueue(clientObj.build_worker_local, timeout=300)
-            jobDB = models.Jobs(client_id=client.id, job_key=job.id)
+            jobDB = models.Jobs(client_id=client.id, job_key=job.id, role="worker")
             db.session.add(jobDB)
             db.session.commit()
 
@@ -485,11 +488,16 @@ def settings_view():
 
 def check_status(client_id, role="all"):
     if (role == "all"):
-        jobDB = models.Jobs.query.filter_by(client_id=client_id).first()
+        jobDB = models.Jobs.query.filter(role != "worker").filter_by(client_id=client_id).first()
         if jobDB:
             job = q.fetch_job(jobDB.job_key)
-            jobStatus = job.is_finished
-            if jobStatus:
+            if job is not None:
+                jobStatus = job.is_finished
+                if jobStatus:
+                    db.session.delete(jobDB)
+                    db.session.commit()
+                    return False
+            else:
                 db.session.delete(jobDB)
                 db.session.commit()
                 return False
@@ -499,7 +507,12 @@ def check_status(client_id, role="all"):
                                             role="worker").first()
         if jobDB:
             job = q.fetch_job(jobDB.job_key)
-            if job.is_finished():
+            if job is not None:
+                if job.is_finished():
+                    db.session.delete(jobDB)
+                    db.session.commit()
+                    return False
+            else:
                 db.session.delete(jobDB)
                 db.session.commit()
                 return False
