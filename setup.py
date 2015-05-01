@@ -1,8 +1,8 @@
 from setuptools import setup
 
 setup(
-    name='grrmanager',
-    version='0.0.0a',
+    name='managrr',
+    version='1.0.0',
     long_description=__doc__,
     packages=['managrr'],
     include_package_data=True,
